@@ -1,0 +1,28 @@
+<!-- templates/teamlead_login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Team Lead Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-[#1e0433] text-white font-sans">
+
+  <form method="post" class="bg-white text-black p-8 rounded shadow w-full max-w-sm">
+    {% csrf_token %}
+    <h2 class="text-2xl font-bold mb-4 text-center">Team Lead Login</h2>
+    
+    {% if messages %}
+      {% for message in messages %}
+        <p class="text-red-600 text-sm mb-3">{{ message }}</p>
+      {% endfor %}
+    {% endif %}
+    
+<input type="text" name="email" id="email" required
+       class="mt-1 block w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+           <input name="password" type="password" placeholder="Password" class="w-full p-2 mb-4 border rounded" required>
+    <button type="submit" class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">Login</button>
+  </form>
+
+</body>
+</html>

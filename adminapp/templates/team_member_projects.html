@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ teammember.team.name }} – Team Member Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="{% static 'css/teammember.css' %}">
+
+
+</head>
+<body class="font-sans leading-relaxed tracking-wide min-h-screen">
+
+    <h2 class="text-2xl font-bold mb-4">My Assigned Projects</h2>
+
+<table class="w-full border">
+  <thead>
+    <tr class="bg-gray-100">
+      <th class="p-2">Project</th>
+      <th class="p-2">Type</th>
+      <th class="p-2">Category</th>
+      <th class="p-2">Deadline</th>
+      <th class="p-2">Assigned By</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for project in projects %}
+    <tr class="border-t">
+      <td class="p-2">{{ project.project_name }}</td>
+      <td class="p-2">{{ project.project_type }}</td>
+      <td class="p-2">{{ project.category }}</td>
+      <td class="p-2">{{ project.deadline }}</td>
+      <td class="p-2">{{ project.assigned_by.get_full_name }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+</body>
+</html>

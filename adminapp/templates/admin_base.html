@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+</head>
+<body class="flex min-h-screen bg-gray-100">
+
+    <aside class="w-64 bg-blue-900 text-white min-h-screen">
+        <div class="p-4 text-xl font-bold">Admin Panel</div>
+        <nav class="flex flex-col space-y-2 p-4">
+            <a href="{% url 'admin_dashboard' %}" class="hover:bg-blue-800 p-2 rounded">Dashboard</a>
+            <a href="{% url 'admin_user_management' %}" class="hover:bg-blue-800 p-2 rounded">User Management</a>
+            <a href="{% url 'admin_work_monitor' %}" class="hover:bg-blue-800 p-2 rounded">Work Monitor</a>
+            <a href="{% url 'admin_logout' %}" class="hover:bg-blue-800 p-2 rounded text-red-300">Logout</a>
+
+        </nav>
+    </aside>
+
+    <main class="flex-1 p-6 overflow-y-auto">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+</body>
+</html>

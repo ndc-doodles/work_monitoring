@@ -1,0 +1,153 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NexFund</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif&family=Michroma&family=Montserrat&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #0a0118, #1e0433);
+      color: white;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-white font-sans relative overflow-x-hidden">
+
+  <!-- Navbar -->
+  <header id="mainNavbar" class="fixed top-0 left-0 w-full flex justify-between items-center px-16 py-6 transition-all duration-300 z-50">
+    <div class="text-2xl font-bold text-purple-400">NexFund</div>
+    <button id="sidebarToggle">
+      <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+  </header>
+
+  <!-- Slide-in Sidebar -->
+  <div id="sidebarMenu" class="fixed top-0 right-0 h-full w-64 bg-white text-black shadow-xl transform translate-x-full transition-transform duration-300 z-40">
+    <div class="p-6 space-y-4">
+      <h2 class="text-xl font-semibold mb-4 text-purple-700">Menu</h2>
+      <a href="{% url 'teamlead_index' %}" class="block hover:text-purple-600">Home</a>
+      <a href="{% url 'teamlead_reports' %}" class="block hover:text-purple-600">Reports</a>
+      <a href="{% url 'assign_project_view' %}" class="block hover:text-purple-600">Projects</a>
+      <a href="#" class="block hover:text-purple-600">Activity Log</a>
+      <a href="#" class="block hover:text-purple-600">Logout</a>
+    </div>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="px-8 md:px-16 pt-32 pb-16 flex flex-col md:flex-row justify-between items-start md:items-center gap-12 min-h-[85vh]">
+    <!-- Left Text -->
+    <div class="max-w-3xl space-y-6">
+      <div class="inline-block px-4 py-1 text-sm bg-white/10 border border-white/20 rounded-full uppercase tracking-wide">
+        Smart Monitoring
+      </div>
+      <h1 class="text-4xl md:text-6xl font-bold leading-tight">
+        Developer Monitoring <span class="text-purple-400">Redefined</span>
+      </h1>
+      <p class="text-gray-400 text-base max-w-2xl">
+        Seamlessly track work hours, software usage, productivity and team performance - all from one intelligent dashboard.
+      </p>
+      <ul class="list-disc pl-6 text-sm text-gray-400 space-y-2 pt-2">
+        <li>Real-time activity logs</li>
+        <li>Automated login/logout tracking</li>
+        <li>Detailed performance analytics</li>
+        <li>Cross-team collaboration metrics</li>
+      </ul>
+    </div>
+
+    <!-- Right Boxes -->
+    <div class="flex flex-row gap-6 w-full md:w-[400px]">
+  <div class="flex-1 bg-gradient-to-br from-[#1b0128] to-[#2b0840] p-6 rounded-lg shadow-md">
+<h2 class="text-3xl font-bold mb-1">{{ total_team_members }}</h2>
+    <p class="text-gray-400 text-sm">Total Team Members</p>
+  </div>
+  <div class="flex-1 bg-gradient-to-br from-[#1b0128] to-[#2b0840] p-6 rounded-lg shadow-md">
+    <h2 class="text-3xl font-bold mb-1">6</h2>
+    <p class="text-gray-400 text-sm">Total Projects</p>
+  </div>
+</div>
+
+  </section>
+
+  <!-- Table Section -->
+  <section class="px-8 md:px-16 pb-16">
+    <h2 class="text-2xl font-semibold mb-4 uppercase">Team Members</h2>
+    <div class="overflow-auto rounded-lg shadow">
+      <table class="min-w-full table-auto text-sm text-left text-white">
+  <thead class="bg-[#2b0840] text-xs uppercase font-medium">
+    <tr>
+      <th scope="col" class="px-6 py-3">Name</th>
+      <th scope="col" class="px-6 py-3">Email</th>
+      <th scope="col" class="px-6 py-3">Department</th>
+      <th scope="col" class="px-6 py-3">Team</th>
+      <th scope="col" class="px-6 py-3">Current Project</th>
+      <th scope="col" class="px-6 py-3">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for member in team_members %}
+    <tr class="border-t border-gray-700">
+      <td class="px-6 py-4">{{ member.name }}</td>
+      <td class="px-6 py-4">{{ member.email }}</td>
+      <td class="px-6 py-4">{{ member.department.name }}</td>
+      <td class="px-6 py-4">{{ member.team.name }}</td>
+      <td class="px-6 py-4">{{ member.current_project|default:"—" }}</td>
+      <td class="px-6 py-4">
+        {% if member.status == 'Online' %}
+          <span class="text-green-400">●</span> Online
+        {% elif member.status == 'Idle' %}
+          <span class="text-yellow-400">●</span> Idle
+        {% else %}
+          <span class="text-gray-400">●</span> Offline
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="6" class="text-center text-gray-400 py-6">No team members found.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+    </div>
+  </section>
+
+  <!-- Script -->
+  <script>
+    const sidebar = document.getElementById('sidebarMenu');
+    const toggleBtn = document.getElementById('sidebarToggle');
+    const navbar = document.getElementById('mainNavbar');
+
+    // Toggle sidebar
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('translate-x-full');
+    });
+
+    // Close sidebar when clicking outside
+    document.addEventListener('click', (e) => {
+      const isInsideSidebar = sidebar.contains(e.target);
+      const isToggleBtn = toggleBtn.contains(e.target);
+      if (!isInsideSidebar && !isToggleBtn && !sidebar.classList.contains('translate-x-full')) {
+        sidebar.classList.add('translate-x-full');
+      }
+    });
+
+    // Transparent navbar on scroll
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 10) {
+        navbar.classList.add('bg-black/30', 'backdrop-blur');
+      } else {
+        navbar.classList.remove('bg-black/30', 'backdrop-blur');
+      }
+    });
+  </script>
+</body>
+</html>

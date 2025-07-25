@@ -1,0 +1,63 @@
+{% extends 'admin_base.html' %}
+
+{% block content %}
+<h1 class="text-2xl font-semibold mb-4">Work Monitoring</h1>
+
+<form method="get" class="mb-4 flex gap-4">
+    <select name="department" class="border p-2 rounded">
+        <option value="">All Departments</option>
+        {% for dept in departments %}
+        <option value="{{ dept.id }}" {% if dept.id|stringformat:"s" == selected_dept %}selected{% endif %}>
+            {{ dept.name }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <select name="team" class="border p-2 rounded">
+        <option value="">All Teams</option>
+        {% for team in teams %}
+        <option value="{{ team.id }}" {% if team.id|stringformat:"s" == selected_team %}selected{% endif %}>
+            {{ team.name }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Filter</button>
+    <a href="{% url 'admin_export_excel' %}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Export to Excel</a>
+</form>
+
+<table class="table-auto w-full bg-white rounded shadow">
+    <thead class="bg-blue-900 text-white">
+        <tr>
+            <th class="px-4 py-2">Name</th>
+            <th class="px-4 py-2">Email</th>
+            <th class="px-4 py-2">Department</th>
+            <th class="px-4 py-2">Team</th>
+            <th class="px-4 py-2">Role</th>
+            <th class="px-4 py-2">Current Work</th>
+            <th class="px-4 py-2">Excel Sheet Link</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr class="border-t text-sm">
+            <td class="px-4 py-2">{{ user.name }}</td>
+            <td class="px-4 py-2">{{ user.email }}</td>
+            <td class="px-4 py-2">{{ user.department.name }}</td>
+            <td class="px-4 py-2">{{ user.team.name }}</td>
+            <td class="px-4 py-2">{{ user.role }}</td>
+            <td class="px-4 py-2">
+                {{ user.profile.current_work|default:"—" }}
+            </td>
+            <td class="px-4 py-2">
+                {% if user.profile.work_link %}
+                    <a href="{{ user.profile.work_link }}" target="_blank" class="text-blue-600 underline">View</a>
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Team Reports – NexFund</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <style>
+    body {
+      background: linear-gradient(135deg, #0a0118, #1e0433);
+      color: white;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-white font-sans overflow-x-auto px-6 md:px-16 py-16">
+     <!-- Navbar -->
+  <header id="mainNavbar" class="fixed top-0 left-0 w-full flex justify-between items-center px-16 py-6 transition-all duration-300 z-50">
+    <div class="text-2xl font-bold text-purple-400">NexFund</div>
+    <button id="sidebarToggle">
+      <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+  </header>
+
+  <!-- Slide-in Sidebar -->
+  <div id="sidebarMenu" class="fixed top-0 right-0 h-full w-64 bg-white text-black shadow-xl transform translate-x-full transition-transform duration-300 z-40">
+    <div class="p-6 space-y-4">
+      <h2 class="text-xl font-semibold mb-4 text-purple-700">Menu</h2>
+      <a href="{% url 'teamlead_index' %}" class="block hover:text-purple-600">Home</a>
+      <a href="{% url 'teamlead_reports' %}" class="block hover:text-purple-600">Reports</a>
+      <a href="{% url 'assign_project_view'%}" class="block hover:text-purple-600">Projects</a>
+      <a href="#" class="block hover:text-purple-600">Activity Log</a>
+      <a href="#" class="block hover:text-purple-600">Logout</a>
+    </div>
+  </div>
+    <h2 class="text-2xl font-bold mb-4">Assign a New Project</h2>
+
+<form method="POST" class="bg-white p-6 rounded shadow space-y-4 max-w-2xl">
+  {% csrf_token %}
+
+  <label class="block">
+    Department:
+    <select name="department" required class="w-full p-2 border rounded">
+      <option value="">Select department</option>
+      {% for dept in departments %}
+        <option value="{{ dept.id }}">{{ dept.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label class="block">
+    Assign To:
+    <select name="assigned_to" required class="w-full p-2 border rounded">
+      {% for member in team_members %}
+        <option value="{{ member.id }}">{{ member.get_full_name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label class="block">
+    Project Name:
+    <input type="text" name="project_name" required class="w-full p-2 border rounded" />
+  </label>
+
+  <label class="block">
+    Project Type (Client, Company, etc.):
+    <input type="text" name="project_type" required class="w-full p-2 border rounded" />
+  </label>
+
+  <label class="block">
+    Category (Optional - e.g., Static, Poster):
+    <input type="text" name="category" class="w-full p-2 border rounded" />
+  </label>
+
+  <label class="block">
+    Description:
+    <textarea name="description" class="w-full p-2 border rounded"></textarea>
+  </label>
+
+  <label class="block">
+    Deadline:
+    <input type="date" name="deadline" required class="w-full p-2 border rounded" />
+  </label>
+
+  <label class="block">
+    Additional Notes:
+    <textarea name="additional_notes" class="w-full p-2 border rounded"></textarea>
+  </label>
+
+  <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+    Assign Project
+  </button>
+</form>
+
+</body>
+</html>

@@ -1,0 +1,14 @@
+body {
+  background-image: url("../images/bg.png"); /* path is relative to CSS file */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.bg-overlay {
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+}
+h1{
+    font-family: "Montserrat", sans-serif;
+}

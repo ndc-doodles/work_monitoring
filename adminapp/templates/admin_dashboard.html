@@ -1,0 +1,89 @@
+{% extends 'admin_base.html' %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">Admin Dashboard</h1>
+
+<!-- Status Cards -->
+<div class="grid grid-cols-4 gap-4 mb-8">
+    <div class="bg-white p-4 rounded shadow">Total Users: {{ total_users }}</div>
+    <div class="bg-green-200 p-4 rounded shadow">Online: {{ online_users }}</div>
+    <div class="bg-yellow-200 p-4 rounded shadow">Idle: {{ idle_users }}</div>
+    <div class="bg-red-200 p-4 rounded shadow">Offline: {{ offline_users }}</div>
+</div>
+
+<!-- Department and Team Sections -->
+<div class="grid grid-cols-2 gap-6">
+    <!-- Department Section -->
+    <div class="bg-white p-4 rounded shadow">
+        <h2 class="text-lg font-semibold mb-4">Add Department</h2>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="add_dept">
+            <input type="text" name="dept_name" placeholder="Department Name" class="border rounded p-2 w-full mb-2">
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Add</button>
+        </form>
+
+        <!-- Department Table -->
+        <table class="w-full mt-4 text-sm border">
+            <thead>
+                <tr class="bg-gray-100">
+                    <th class="text-left p-2 border">#</th>
+                    <th class="text-left p-2 border">Department</th>
+                    <th class="text-left p-2 border">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dept in departments %}
+                <tr>
+                    <td class="p-2 border">{{ forloop.counter }}</td>
+                    <td class="p-2 border">{{ dept.name }}</td>
+                    <td class="p-2 border">
+                        <form method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="delete_dept" value="{{ dept.id }}">
+                            <button type="submit" class="text-red-600 hover:underline">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Team Section -->
+    <div class="bg-white p-4 rounded shadow">
+        <h2 class="text-lg font-semibold mb-4">Add Team</h2>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="add_team">
+            <input type="text" name="team_name" placeholder="Team Name" class="border rounded p-2 w-full mb-2">
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Add</button>
+        </form>
+
+        <!-- Team Table -->
+        <table class="w-full mt-4 text-sm border">
+            <thead>
+                <tr class="bg-gray-100">
+                    <th class="text-left p-2 border">#</th>
+                    <th class="text-left p-2 border">Team</th>
+                    <th class="text-left p-2 border">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for team in teams %}
+                <tr>
+                    <td class="p-2 border">{{ forloop.counter }}</td>
+                    <td class="p-2 border">{{ team.name }}</td>
+                    <td class="p-2 border">
+                        <form method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="delete_team" value="{{ team.id }}">
+                            <button type="submit" class="text-red-600 hover:underline">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>All Team Reports – NexFund</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <style>
+    body {
+      background: linear-gradient(135deg, #0a0118, #1e0433);
+      color: white;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-white font-sans px-6 md:px-16 py-16">
+
+  <h1 class="text-4xl font-bold text-center mb-12">All Team Reports</h1>
+
+  <!-- Morning Reports -->
+  <h2 class="text-2xl font-semibold mb-4">Morning Reports</h2>
+  <div class="overflow-x-auto rounded-lg shadow-lg border border-purple-600 mb-12">
+    <table class="min-w-full table-auto text-sm text-left text-white">
+      <thead class="bg-purple-900 text-xs uppercase font-medium">
+        <tr>
+          <th class="px-6 py-3">Date</th>
+          <th class="px-6 py-3">Name</th>
+          <th class="px-6 py-3">Department</th>
+          <th class="px-6 py-3">Team</th>
+          <th class="px-6 py-3">Role</th>
+          <th class="px-6 py-3">Report</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for report in morning_reports %}
+        <tr class="border-t border-gray-700">
+          <td class="px-6 py-4">{{ report.submitted_at|date:"Y-m-d" }}</td>
+          <td class="px-6 py-4">{{ report.user.name }}</td>
+          <td class="px-6 py-4">{{ report.user.department.name }}</td>
+          <td class="px-6 py-4">{{ report.user.team.name }}</td>
+          <td class="px-6 py-4">{{ report.user.role }}</td>
+          <td class="px-6 py-4 text-gray-200">{{ report.content }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center py-6 text-gray-400">No morning reports found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Evening Reports -->
+  <h2 class="text-2xl font-semibold mb-4">Evening Reports</h2>
+  <div class="overflow-x-auto rounded-lg shadow-lg border border-purple-600">
+    <table class="min-w-full table-auto text-sm text-left text-white">
+      <thead class="bg-purple-900 text-xs uppercase font-medium">
+        <tr>
+          <th class="px-6 py-3">Date</th>
+          <th class="px-6 py-3">Name</th>
+          <th class="px-6 py-3">Department</th>
+          <th class="px-6 py-3">Team</th>
+          <th class="px-6 py-3">Role</th>
+          <th class="px-6 py-3">Report</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for report in evening_reports %}
+        <tr class="border-t border-gray-700">
+          <td class="px-6 py-4">{{ report.submitted_at|date:"Y-m-d" }}</td>
+          <td class="px-6 py-4">{{ report.user.name }}</td>
+          <td class="px-6 py-4">{{ report.user.department.name }}</td>
+          <td class="px-6 py-4">{{ report.user.team.name }}</td>
+          <td class="px-6 py-4">{{ report.user.role }}</td>
+          <td class="px-6 py-4 text-gray-200">{{ report.content }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center py-6 text-gray-400">No evening reports found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-10 text-center">
+    <a href="{% url 'teamlead_reports' %}" class="bg-purple-700 hover:bg-purple-900 text-white px-6 py-2 rounded-lg">Back to Today's Reports</a>
+  </div>
+
+</body>
+</html>
