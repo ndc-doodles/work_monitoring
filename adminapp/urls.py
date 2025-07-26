@@ -19,7 +19,7 @@ urlpatterns = [
     path('teamlead_login/', views.teamlead_login, name='teamlead_login'),
     path('teamlead_index/', views.teamlead_index, name='teamlead_index'),
     path('submit-report/', views.submit_report, name='submit_report'),
-    path('assign_project_view/', views.assign_project_view, name='assign_project_view'),
+    path('teamlead_assign_project/', views.teamlead_assign_project, name='teamlead_assign_project'),
     path('team_member_projects_view/', views.team_member_projects_view, name='team_member_projects_view'),
 
     path('teamlead_reports/', views.teamlead_reports, name='teamlead_reports'),

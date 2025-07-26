@@ -31,19 +31,19 @@
       <h2 class="text-xl font-semibold mb-4 text-purple-700">Menu</h2>
       <a href="{% url 'teamlead_index' %}" class="block hover:text-purple-600">Home</a>
       <a href="{% url 'teamlead_reports' %}" class="block hover:text-purple-600">Reports</a>
-      <a href="{% url 'assign_project_view'%}" class="block hover:text-purple-600">Projects</a>
+      <a href="{% url 'teamlead_assign_project'%}" class="block hover:text-purple-600">Projects</a>
       <a href="#" class="block hover:text-purple-600">Activity Log</a>
       <a href="#" class="block hover:text-purple-600">Logout</a>
     </div>
   </div>
-    <h2 class="text-2xl font-bold mb-4">Assign a New Project</h2>
+    <h2 class="text-2xl font-semibold mb-4 text-purple-300 uppercase mt-10">Assign a New Project</h2>
 
-<form method="POST" class="bg-white p-6 rounded shadow space-y-4 max-w-2xl">
+<form method="POST" class="border border-2  p-6  space-y-4 max-w-7xl mx-auto ">
   {% csrf_token %}
 
   <label class="block">
     Department:
-    <select name="department" required class="w-full p-2 border rounded">
+    <select name="department" required class="w-full mt-4 p-2 border rounded bg-transparent">
       <option value="">Select department</option>
       {% for dept in departments %}
         <option value="{{ dept.id }}">{{ dept.name }}</option>
@@ -53,7 +53,7 @@
 
   <label class="block">
     Assign To:
-    <select name="assigned_to" required class="w-full p-2 border rounded">
+    <select name="assigned_to" required class="w-full mt-4 p-2 border rounded bg-transparent">
       {% for member in team_members %}
         <option value="{{ member.id }}">{{ member.get_full_name }}</option>
       {% endfor %}
@@ -61,33 +61,33 @@
   </label>
 
   <label class="block">
-    Project Name:
-    <input type="text" name="project_name" required class="w-full p-2 border rounded" />
+    Work Name:
+    <input type="text" name="project_name" required class="w-full mt-4 p-2 border rounded bg-transparent" />
   </label>
 
   <label class="block">
-    Project Type (Client, Company, etc.):
-    <input type="text" name="project_type" required class="w-full p-2 border rounded" />
+    Work Type (Client, Company, etc.):
+    <input type="text" name="project_type" required class="w-full mt-4 p-2 border rounded bg-transparent" />
   </label>
 
   <label class="block">
     Category (Optional - e.g., Static, Poster):
-    <input type="text" name="category" class="w-full p-2 border rounded" />
+    <input type="text" name="category" class="w-full p-2 mt-4 border rounded bg-transparent" />
   </label>
 
   <label class="block">
     Description:
-    <textarea name="description" class="w-full p-2 border rounded"></textarea>
+    <textarea name="description" class="w-full p-2 border mt-4 rounded bg-transparent"></textarea>
   </label>
 
   <label class="block">
     Deadline:
-    <input type="date" name="deadline" required class="w-full p-2 border rounded" />
+    <input type="date" name="deadline" required class="w-full p-2 mt-4 border rounded bg-transparent" />
   </label>
 
   <label class="block">
     Additional Notes:
-    <textarea name="additional_notes" class="w-full p-2 border rounded"></textarea>
+    <textarea name="additional_notes" class="w-full p-2 border mt-4 rounded bg-transparent  "></textarea>
   </label>
 
   <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">

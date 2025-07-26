@@ -374,7 +374,7 @@ def all_reports_view(request):
     })
 
 
-def assign_project_view(request):
+def teamlead_assign_project(request):
     departments = Department.objects.all()
     team_members = User.objects.all()
 
@@ -383,7 +383,7 @@ def assign_project_view(request):
         # Extract data from request.POST here
         pass
 
-    return render(request, 'assign_project.html', {
+    return render(request, 'teamlead_assign_project.html', {
         'departments': departments,
         'team_members': team_members,
     })
