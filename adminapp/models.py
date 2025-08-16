@@ -19,7 +19,7 @@ class User(models.Model):
     team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Offline')
-    current_project = models.CharField(max_length=200, blank=True)
+    current_project = models.CharField(max_length=200, blank=True)  
 
 
 class Report(models.Model):

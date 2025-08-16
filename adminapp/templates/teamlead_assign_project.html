@@ -38,41 +38,56 @@
   </div>
     <h2 class="text-2xl font-semibold mb-4 text-purple-300 uppercase mt-10">Assign a New Project</h2>
 
-<form method="POST" class="border border-2  p-6  space-y-4 max-w-7xl mx-auto ">
+<form method="POST" class="border border-2 p-6 space-y-4 max-w-7xl mx-auto">
   {% csrf_token %}
 
+  <!-- Team (Readonly) -->
+  <label class="block">
+    Team:
+    <input type="text" value="{{ team.name }}" readonly
+           class="w-full mt-4 p-2 border rounded bg-transparent" />
+    <input type="hidden" name="team" value="{{ team.id }}">
+  </label>
+
+  <!-- Department -->
   <label class="block">
     Department:
-    <select name="department" required class="w-full mt-4 p-2 border rounded bg-transparent">
-      <option value="">Select department</option>
+    <select name="department" id="departmentSelect" required
+            class="w-full mt-4 p-2 border rounded bg-transparent">
+      <option value="" >Select department</option>
       {% for dept in departments %}
-        <option value="{{ dept.id }}">{{ dept.name }}</option>
+        <option value="{{ dept.id }}"class="bg-transparent text-black">{{ dept.name }}</option>
       {% endfor %}
     </select>
   </label>
 
+  <!-- Assign To -->
   <label class="block">
-    Assign To:
-    <select name="assigned_to" required class="w-full mt-4 p-2 border rounded bg-transparent">
-      {% for member in team_members %}
-        <option value="{{ member.id }}">{{ member.get_full_name }}</option>
-      {% endfor %}
-    </select>
-  </label>
+  Assign To:
+  <select id="assignedToSelect" name="assigned_to" required
+          class="w-full mt-4 p-2 border rounded bg-transparent ">
+    <option value="" class="text-black">Select a member</option>
+  </select>
+</label>
 
+
+  <!-- Remaining fields (unchanged) -->
   <label class="block">
     Work Name:
-    <input type="text" name="project_name" required class="w-full mt-4 p-2 border rounded bg-transparent" />
+    <input type="text" name="project_name" required
+           class="w-full mt-4 p-2 border rounded bg-transparent" />
   </label>
 
   <label class="block">
     Work Type (Client, Company, etc.):
-    <input type="text" name="project_type" required class="w-full mt-4 p-2 border rounded bg-transparent" />
+    <input type="text" name="project_type" required
+           class="w-full mt-4 p-2 border rounded bg-transparent" />
   </label>
 
   <label class="block">
     Category (Optional - e.g., Static, Poster):
-    <input type="text" name="category" class="w-full p-2 mt-4 border rounded bg-transparent" />
+    <input type="text" name="category"
+           class="w-full mt-4 p-2 border rounded bg-transparent" />
   </label>
 
   <label class="block">
@@ -82,18 +97,92 @@
 
   <label class="block">
     Deadline:
-    <input type="date" name="deadline" required class="w-full p-2 mt-4 border rounded bg-transparent" />
+    <input type="date" name="deadline" required
+           class="w-full p-2 mt-4 border rounded bg-transparent" />
   </label>
 
   <label class="block">
     Additional Notes:
-    <textarea name="additional_notes" class="w-full p-2 border mt-4 rounded bg-transparent  "></textarea>
+    <textarea name="additional_notes" class="w-full p-2 border mt-4 rounded bg-transparent"></textarea>
   </label>
 
-  <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+  <button type="submit"
+          class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
     Assign Project
   </button>
 </form>
+
+<script>
+document.getElementById("departmentSelect").addEventListener("change", function() {
+    let deptId = this.value;
+    let assignedToSelect = document.getElementById("assignedToSelect");
+    assignedToSelect.innerHTML = "<option value=''>Loading...</option>";
+
+    if (deptId) {
+        fetch(`/ajax/get-team-members/?department_id=${deptId}`)
+        .then(response => response.json())
+        .then(data => {
+            assignedToSelect.innerHTML = "";
+            if (data.members.length > 0) {
+                data.members.forEach(member => {
+                    let opt = document.createElement("option");
+                    opt.value = member.id;
+                    opt.textContent = member.name;
+                    assignedToSelect.appendChild(opt);
+                });
+            } else {
+                assignedToSelect.innerHTML = "<option value=''>No members found</option>";
+            }
+        });
+    } else {
+        assignedToSelect.innerHTML = "<option value=''>Select department first</option>";
+    }
+});
+</script>
+
+
+<main class="pt-24 px-12">
+  <h1 class="text-2xl font-bold mb-6">Assigned Projects</h1>
+
+  <div class="overflow-x-auto bg-white shadow-md rounded-lg">
+    <table class="min-w-full text-sm text-left border border-gray-200">
+      <thead class="bg-gray-100 text-gray-700">
+        <tr>
+          <th class="px-4 py-2 border">Project Name</th>
+          <th class="px-4 py-2 border">Type</th>
+          <th class="px-4 py-2 border">Category</th>
+          <th class="px-4 py-2 border">Description</th>
+          <th class="px-4 py-2 border">Deadline</th>
+          <th class="px-4 py-2 border">Date Assigned</th>
+          <th class="px-4 py-2 border">Assigned By</th>
+          <th class="px-4 py-2 border">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for project in projects %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-2 border font-semibold">{{ project.project_name }}</td>
+          <td class="px-4 py-2 border">{{ project.project_type }}</td>
+          <td class="px-4 py-2 border">{{ project.category|default:"-" }}</td>
+          <td class="px-4 py-2 border">{{ project.description|truncatewords:10 }}</td>
+          <td class="px-4 py-2 border text-red-500 font-medium">{{ project.deadline }}</td>
+          <td class="px-4 py-2 border">{{ project.date_assigned }}</td>
+          <td class="px-4 py-2 border">{{ project.assigned_by.name }}</td>
+          <td class="px-4 py-2 border">{{ project.additional_notes|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="px-4 py-4 text-center text-gray-500">
+            No projects assigned yet.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</main>
+
+
 
 </body>
 </html>

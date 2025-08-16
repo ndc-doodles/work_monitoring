@@ -17,11 +17,14 @@ urlpatterns = [
 
     path('', views.welcome, name='welcome'),
     path('teamlead_login/', views.teamlead_login, name='teamlead_login'),
-    path('teamlead_index/', views.teamlead_index, name='teamlead_index'),
+    path('teamlead/index/', views.teamlead_index, name='teamlead_index'),
     path('submit-report/', views.submit_report, name='submit_report'),
     path('teamlead_assign_project/', views.teamlead_assign_project, name='teamlead_assign_project'),
-    path('team_member_projects_view/', views.team_member_projects_view, name='team_member_projects_view'),
+    path('teammember_assigned_projects/', views.teammember_assigned_projects, name='teammember_assigned_projects'),
+    path('ajax/get-team-members/', views.get_team_members, name='get_team_members'),
 
+    path('teamlead/project/edit/<int:project_id>/', views.edit_assigned_project, name='edit_assigned_project'),
+    path('teamlead/project/delete/<int:project_id>/',views. delete_assigned_project, name='delete_assigned_project'),
     path('teamlead_reports/', views.teamlead_reports, name='teamlead_reports'),
     path('all_reports_view/', views.all_reports_view, name='all_reports'),
 

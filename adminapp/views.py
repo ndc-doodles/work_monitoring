@@ -11,6 +11,8 @@ from django.contrib.auth import get_user_model
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import localdate
 from datetime import date
+from django.http import JsonResponse
+
 
 
 
@@ -193,23 +195,25 @@ def admin_logout(request):
 
 def welcome(request):
     return render(request, 'welcome.html')
-
 def teamlead_login(request):
-    if request.method == 'POST':
-        email = request.POST['email']
-        password = request.POST['password']
+    if request.method == "POST":
+        email = request.POST.get("email")
+        password = request.POST.get("password")
 
         try:
-            user = User.objects.get(email=email, password=password, role='Team Lead')
-            request.session['user_id'] = user.id  # ✅ store team lead's ID in session
-            return redirect('teamlead_reports')
+            teamlead = User.objects.get(email=email, password=password, role="Team Lead")
+            request.session["user_id"] = teamlead.id   # 👈 Fixed key
+            print("✅ Login success:", teamlead.id)  
+            return redirect("teamlead_index")
         except User.DoesNotExist:
-            return render(request, 'teamlead_login.html', {'error': 'Invalid credentials'})
+            messages.error(request, "Invalid email or password")
+            return redirect("teamlead_login")
 
-    return render(request, 'teamlead_login.html')
+    return render(request, "teamlead_login.html")
+
 
 def teamlead_index(request):
-    user_id = request.session.get('user_id')
+    user_id = request.session.get('user_id')  # 👈 Consistent key
     if not user_id:
         return redirect('teamlead_login')
 
@@ -218,13 +222,11 @@ def teamlead_index(request):
     except User.DoesNotExist:
         return redirect('teamlead_login')
 
-    # Now fetch team members of the same team (excluding the Team Lead themselves)
     team_members = User.objects.filter(
         team=user.team,
         role='Team Member'
     )
 
-    # Count unique projects (non-empty) from those team members
     total_projects = (
         team_members.exclude(current_project="")
                     .values('current_project')
@@ -239,7 +241,7 @@ def teamlead_index(request):
         'total_projects': total_projects,
     }
 
-    return render(request, 'teamlead_index.html', context)  
+    return render(request, 'teamlead_index.html', context)
 
 @csrf_exempt
 def submit_report(request):
@@ -305,21 +307,20 @@ def teamlead_reports(request):
 
 
 def teammember_login(request):
-    if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
+    if request.method == "POST":
+        email = request.POST.get("email")
+        password = request.POST.get("password")
 
         try:
-            user = User.objects.get(email=email, password=password, role='Team Member')
-            request.session['user_id'] = user.id
-            print("✅ Team Member Logged In:", user.name)
-            return redirect('teammember_index')  # This should work
+            user = User.objects.get(email=email, password=password, role="Team Member")
+            # Store the user ID in session
+            request.session['teammember_id'] = user.id
+            return redirect('teammember_assigned_projects')  # Redirect after login
         except User.DoesNotExist:
-            error = "Invalid credentials or not a Team Member"
-            print("❌ Login failed")
-            return render(request, 'teammember_login.html', {'error': error})
+            messages.error(request, "Invalid email or password")
+            return redirect('teammember_login')
 
-    return render(request, 'teammember_login.html')
+    return render(request, "teammember_login.html")
 
 def teammember_index(request):
     user_id = request.session.get('user_id')
@@ -373,22 +374,138 @@ def all_reports_view(request):
         'evening_reports': evening_reports
     })
 
-
 def teamlead_assign_project(request):
-    departments = Department.objects.all()
-    team_members = User.objects.all()
+    # Check if teamlead is logged in
+    teamlead_id = request.session.get('teamlead_id')
+    if not teamlead_id:
+        return redirect('teamlead_login')
+
+    teamlead = User.objects.get(id=teamlead_id)
+    team = teamlead.team
+    departments = Department.objects.all()  # For department dropdown
+
+    # Handle form submission
+    if request.method == 'POST':
+        project_name = request.POST.get('project_name')
+        project_type = request.POST.get('project_type')
+        category = request.POST.get('category')
+        description = request.POST.get('description')
+        deadline = request.POST.get('deadline')
+        additional_notes = request.POST.get('additional_notes')
+        assigned_to_id = request.POST.get('assigned_to')
+        department_id = request.POST.get('department')
+
+        # Get department and assigned user objects
+        department = Department.objects.get(id=department_id)
+        assigned_to = User.objects.get(id=assigned_to_id)
+
+        # Create the assigned project
+        AssignedProject.objects.create(
+            project_name=project_name,
+            project_type=project_type,
+            category=category,
+            description=description,
+            deadline=deadline,
+            additional_notes=additional_notes,
+            department=department,
+            team=team,
+            assigned_by=teamlead,
+            assigned_to=assigned_to,
+        )
+
+        return redirect('teamlead_assign_project')  # Reload page to see new project
+
+    # Fetch all projects assigned by this teamlead for this team
+    assigned_projects = AssignedProject.objects.filter(
+        assigned_by=teamlead,
+        team=team
+    ).order_by('-date_assigned')  # latest projects first
+
+    # Render template with form data and assigned projects
+    context = {
+        'team': team,
+        'departments': departments,
+        'assigned_projects': assigned_projects,
+    }
+
+    return render(request, 'teamlead_assign_project.html', context)
+
+def get_team_members(request):
+    teamlead_id = request.session.get('teamlead_id')
+    if not teamlead_id:
+        return JsonResponse({"error": "Not logged in"}, status=403)
+
+    teamlead = User.objects.get(id=teamlead_id)
+    team = teamlead.team
+    department_id = request.GET.get('department_id')
+
+    if not department_id:
+        return JsonResponse({"members": []})
+
+    members = User.objects.filter(
+        team=team,
+        department_id=department_id,
+        role="Team Member"
+    ).values("id", "name")
+
+    return JsonResponse({"members": list(members)})
+   
+
+
+def teammember_assigned_projects(request):
+    # Get logged-in Team Member ID from session
+    teammember_id = request.session.get('teammember_id')
+    if not teammember_id:
+        return redirect('teammember_login')
+
+    try:
+        user = User.objects.get(id=teammember_id, role='Team Member')
+    except User.DoesNotExist:
+        # If the user doesn't exist or role mismatch, force login
+        return redirect('teammember_login')
+
+    # Fetch projects assigned to this team member
+    projects = AssignedProject.objects.filter(
+        assigned_to=user
+    ).order_by('-date_assigned')  # latest first
+
+    return render(request, 'teammember_assignedprojects.html', {
+        'projects': projects
+    })
+
+
+
+
+def edit_assigned_project(request, project_id):
+    project = get_object_or_404(AssignedProject, id=project_id)
+    teamlead_id = request.session.get('teamlead_id')
+    if project.assigned_by.id != teamlead_id:
+        return redirect('teamlead_assign_project')
 
     if request.method == 'POST':
-        # Handle form submission and save project assignment
-        # Extract data from request.POST here
-        pass
+        project.project_name = request.POST.get('project_name')
+        project.project_type = request.POST.get('project_type')
+        project.category = request.POST.get('category')
+        project.description = request.POST.get('description')
+        project.deadline = request.POST.get('deadline')
+        project.additional_notes = request.POST.get('additional_notes')
+        assigned_to_id = request.POST.get('assigned_to')
+        project.assigned_to = User.objects.get(id=assigned_to_id)
+        project.save()
+        return redirect('teamlead_assign_project')
 
-    return render(request, 'teamlead_assign_project.html', {
+    departments = Department.objects.all()
+    team = project.team
+    return render(request, 'edit_assigned_project.html', {
+        'project': project,
         'departments': departments,
-        'team_members': team_members,
+        'team': team,
     })
-  
-    
-def team_member_projects_view(request):
-    projects = AssignedProject.objects.filter(assigned_to=request.user).order_by('-date_assigned')
-    return render(request, 'team_member_projects.html', {'projects': projects})
+
+
+def delete_assigned_project(request, project_id):
+    project = get_object_or_404(AssignedProject, id=project_id)
+    teamlead_id = request.session.get('teamlead_id')
+    if project.assigned_by.id == teamlead_id:
+        project.delete()
+    return redirect('teamlead_assign_project')

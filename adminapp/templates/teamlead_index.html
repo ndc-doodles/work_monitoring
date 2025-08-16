@@ -30,12 +30,12 @@
   </header>
 
   <!-- Slide-in Sidebar -->
-  <div id="sidebarMenu" class="fixed top-0 right-0 h-full w-64 bg-white text-black shadow-xl transform translate-x-full transition-transform duration-300 z-40">
+  <div id="sidebarMenu" class="fixed top-0 right-0 h-full w-64 bg-white text-black shadow-xl transform translate-x-full transition-transform duration-300 z-[9999]">
     <div class="p-6 space-y-4">
       <h2 class="text-xl font-semibold mb-4 text-purple-700">Menu</h2>
       <a href="{% url 'teamlead_index' %}" class="block hover:text-purple-600">Home</a>
       <a href="{% url 'teamlead_reports' %}" class="block hover:text-purple-600">Reports</a>
-      <a href="{% url 'assign_project_view' %}" class="block hover:text-purple-600">Projects</a>
+      <a href="{% url 'teamlead_assign_project' %}" class="block hover:text-purple-600">Projects</a>
       <a href="#" class="block hover:text-purple-600">Activity Log</a>
       <a href="#" class="block hover:text-purple-600">Logout</a>
     </div>

@@ -1,0 +1,104 @@
+{% load static %}
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ teammember.team.name }} – Team Member Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="{% static 'css/teammember.css' %}">
+
+
+</head>
+<body class="font-sans leading-relaxed tracking-wide min-h-screen">
+<header id="mainHeader" 
+        class="fixed top-0 left-0 w-full text-white px-12 py-4 flex items-center justify-between transition-all duration-300 z-50">
+  <!-- Logo Text -->
+  <div class="flex items-center space-x-2">
+    <span class="font-bold text-2xl">MyApp</span>
+  </div>
+
+  <!-- Toggle Button -->
+  <button id="menuToggle" 
+          class="p-2 rounded-md hover:bg-white/10 focus:outline-none">
+    <svg xmlns="http://www.w3.org/2000/svg" 
+         class="h-6 w-6" fill="none" 
+         viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" 
+            stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+    </svg>
+  </button>
+</header>
+
+<!-- Sidebar Menu -->
+<div id="menuSidebar" 
+     class="fixed top-0 right-0 h-full w-64 bg-black/70 backdrop-blur-md text-white shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+  <div class="flex justify-between items-center p-4 border-b border-white/20">
+    <span class="font-semibold text-lg">Menu</span>
+    <button id="closeMenu" class="text-gray-400 hover:text-red-500">&times;</button>
+  </div>
+  <nav class="flex flex-col p-4 space-y-2">
+  <a href="{% url 'teammember_index' %}"
+     class="px-4 py-2 rounded hover:bg-white/20 {% if request.resolver_match.url_name == 'teammember_index' %}bg-white/30 font-semibold{% endif %}">
+    Home
+  </a>
+
+  <a href="{% url 'teammember_assigned_projects' %}"
+     class="px-4 py-2 rounded hover:bg-white/20 {% if request.resolver_match.url_name == 'teammember_assigned_projects' %}bg-white/30 font-semibold{% endif %}">
+    Project Assigned
+  </a>
+</nav>
+
+</div>
+
+
+<main class="pt-24 px-12">
+  <h1 class="text-2xl font-bold mb-6 uppercase text-white">Assigned Projects</h1>
+
+  <div class="overflow-x-auto shadow-md rounded-lg">
+  <table class="min-w-full text-sm text-left border border-gray-200">
+    <thead class="bg-gray-100 text-gray-700">
+      <tr>
+        <th class="px-4 py-2 border">Project Name</th>
+        <th class="px-4 py-2 border">Type</th>
+        <th class="px-4 py-2 border">Category</th>
+        <th class="px-4 py-2 border">Description</th>
+        <th class="px-4 py-2 border">Deadline</th>
+        <th class="px-4 py-2 border">Date Assigned</th>
+        {% comment %} <th class="px-4 py-2 border">Assigned By</th> {% endcomment %}
+        <th class="px-4 py-2 border">Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for project in projects %}
+      <tr class="bg-white/0 text-white">
+        <td class="px-4 py-2 border font-semibold">{{ project.project_name }}</td>
+        <td class="px-4 py-2 border">{{ project.project_type }}</td>
+        <td class="px-4 py-2 border">{{ project.category|default:"-" }}</td>
+        <td class="px-4 py-2 border">{{ project.description|truncatewords:10 }}</td>
+        <td class="px-4 py-2 border text-red-500 font-medium">{{ project.deadline }}</td>
+        <td class="px-4 py-2 border">{{ project.date_assigned }}</td>
+        {% comment %} <td class="px-4 py-2 border">{{ project.assigned_by.username }}</td> {% endcomment %}
+        <td class="px-4 py-2 border">{{ project.additional_notes|default:"-" }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="8" class="px-4 py-4 text-center text-gray-500">
+          No projects assigned yet.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+</main>
+
+
+
+
+  <script src="{% static 'js/team_member.js' %}"></script>
+
+</body>
+</html>
