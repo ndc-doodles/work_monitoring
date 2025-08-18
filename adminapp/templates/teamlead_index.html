@@ -19,7 +19,6 @@
 </head>
 <body class="min-h-screen text-white font-sans relative overflow-x-hidden">
 
-  <!-- Navbar -->
   <header id="mainNavbar" class="fixed top-0 left-0 w-full flex justify-between items-center px-16 py-6 transition-all duration-300 z-50">
     <div class="text-2xl font-bold text-purple-400">NexFund</div>
     <button id="sidebarToggle">
@@ -29,7 +28,6 @@
     </button>
   </header>
 
-  <!-- Slide-in Sidebar -->
   <div id="sidebarMenu" class="fixed top-0 right-0 h-full w-64 bg-white text-black shadow-xl transform translate-x-full transition-transform duration-300 z-[9999]">
     <div class="p-6 space-y-4">
       <h2 class="text-xl font-semibold mb-4 text-purple-700">Menu</h2>
@@ -41,9 +39,7 @@
     </div>
   </div>
 
-  <!-- Hero Section -->
   <section class="px-8 md:px-16 pt-32 pb-16 flex flex-col md:flex-row justify-between items-start md:items-center gap-12 min-h-[85vh]">
-    <!-- Left Text -->
     <div class="max-w-3xl space-y-6">
       <div class="inline-block px-4 py-1 text-sm bg-white/10 border border-white/20 rounded-full uppercase tracking-wide">
         Smart Monitoring
@@ -120,34 +116,6 @@
     </div>
   </section>
 
-  <!-- Script -->
-  <script>
-    const sidebar = document.getElementById('sidebarMenu');
-    const toggleBtn = document.getElementById('sidebarToggle');
-    const navbar = document.getElementById('mainNavbar');
-
-    // Toggle sidebar
-    toggleBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('translate-x-full');
-    });
-
-    // Close sidebar when clicking outside
-    document.addEventListener('click', (e) => {
-      const isInsideSidebar = sidebar.contains(e.target);
-      const isToggleBtn = toggleBtn.contains(e.target);
-      if (!isInsideSidebar && !isToggleBtn && !sidebar.classList.contains('translate-x-full')) {
-        sidebar.classList.add('translate-x-full');
-      }
-    });
-
-    // Transparent navbar on scroll
-    window.addEventListener('scroll', () => {
-      if (window.scrollY > 10) {
-        navbar.classList.add('bg-black/30', 'backdrop-blur');
-      } else {
-        navbar.classList.remove('bg-black/30', 'backdrop-blur');
-      }
-    });
-  </script>
+  <script src="{% static 'js/teamlead.js' %}"></script>
 </body>
 </html>

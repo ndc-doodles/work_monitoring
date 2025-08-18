@@ -58,44 +58,71 @@
 
   <div class="overflow-x-auto shadow-md rounded-lg">
   <table class="min-w-full text-sm text-left border border-gray-200">
-    <thead class="bg-gray-100 text-gray-700">
-      <tr>
-        <th class="px-4 py-2 border">Project Name</th>
-        <th class="px-4 py-2 border">Type</th>
-        <th class="px-4 py-2 border">Category</th>
-        <th class="px-4 py-2 border">Description</th>
-        <th class="px-4 py-2 border">Deadline</th>
-        <th class="px-4 py-2 border">Date Assigned</th>
-        {% comment %} <th class="px-4 py-2 border">Assigned By</th> {% endcomment %}
-        <th class="px-4 py-2 border">Notes</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for project in projects %}
-      <tr class="bg-white/0 text-white">
-        <td class="px-4 py-2 border font-semibold">{{ project.project_name }}</td>
-        <td class="px-4 py-2 border">{{ project.project_type }}</td>
-        <td class="px-4 py-2 border">{{ project.category|default:"-" }}</td>
-        <td class="px-4 py-2 border">{{ project.description|truncatewords:10 }}</td>
-        <td class="px-4 py-2 border text-red-500 font-medium">{{ project.deadline }}</td>
-        <td class="px-4 py-2 border">{{ project.date_assigned }}</td>
-        {% comment %} <td class="px-4 py-2 border">{{ project.assigned_by.username }}</td> {% endcomment %}
-        <td class="px-4 py-2 border">{{ project.additional_notes|default:"-" }}</td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="8" class="px-4 py-4 text-center text-gray-500">
-          No projects assigned yet.
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <thead class="bg-gray-100 text-gray-700">
+    <tr>
+      <th class="px-4 py-2 border">Project Name</th>
+      <th class="px-4 py-2 border">Type</th>
+      <th class="px-4 py-2 border">Category</th>
+      <th class="px-4 py-2 border">Description</th>
+      <th class="px-4 py-2 border">Deadline</th>
+      <th class="px-4 py-2 border">Date Assigned</th>
+      <th class="px-4 py-2 border">Notes</th>
+      <th class="px-4 py-2 border">Files</th>  <!-- ✅ New -->
+    </tr>
+  </thead>
+  <tbody>
+    {% for project in projects %}
+    <tr class="bg-white/0 text-white">
+      <td class="px-4 py-2 border font-semibold">{{ project.project_name }}</td>
+      <td class="px-4 py-2 border">{{ project.project_type }}</td>
+      <td class="px-4 py-2 border">{{ project.category|default:"-" }}</td>
+<td class="px-4 py-2 border">
+  {{ project.description|truncatewords:10 }}
+  {% if project.description|length > 50 %}
+    <button onclick="openDescriptionModal(`{{ project.description|escapejs }}`)" 
+            class="text-blue-500 underline ml-2">
+      Read More
+    </button>
+  {% endif %}
+</td>      <td class="px-4 py-2 border text-red-500 font-medium">{{ project.deadline }}</td>
+      <td class="px-4 py-2 border">{{ project.date_assigned }}</td>
+      <td class="px-4 py-2 border">{{ project.additional_notes|default:"-" }}</td>
+      <td class="px-4 py-2 border">
+            {% if project.attachment %}
+              <a href="{{ project.attachment.url }}" target="_blank" 
+                 class="text-blue-400 underline hover:text-blue-600">📎 Attachment</a><br>
+            {% endif %}
+            {% if project.image %}
+              <a href="{{ project.image.url }}" target="_blank" 
+                 class="text-green-400 underline hover:text-green-600">🖼️ Image</a>
+            {% endif %}
+            {% if not project.attachment and not project.image %}
+              -
+            {% endif %}
+          </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="8" class="px-4 py-4 text-center text-gray-500">
+        No projects assigned yet.
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
 </div>
 
 </main>
 
-
+<div id="descriptionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg w-full max-w-lg p-6 relative">
+    <button onclick="closeDescriptionModal()" 
+            class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl">&times;</button>
+    <h2 class="text-lg font-semibold mb-4">Project Description</h2>
+    <p id="descriptionContent" class="text-gray-700 whitespace-pre-line"></p>
+  </div>
+</div>
 
 
   <script src="{% static 'js/team_member.js' %}"></script>

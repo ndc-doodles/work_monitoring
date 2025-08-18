@@ -20,6 +20,9 @@ urlpatterns = [
     path('teamlead/index/', views.teamlead_index, name='teamlead_index'),
     path('submit-report/', views.submit_report, name='submit_report'),
     path('teamlead_assign_project/', views.teamlead_assign_project, name='teamlead_assign_project'),
+    path('edit_assigned_project/<int:project_id>/', views.edit_assigned_project, name='edit_assigned_project'),
+path('delete_assigned_project/<int:project_id>/', views.delete_assigned_project, name='delete_assigned_project'),
+
     path('teammember_assigned_projects/', views.teammember_assigned_projects, name='teammember_assigned_projects'),
     path('ajax/get-team-members/', views.get_team_members, name='get_team_members'),
 

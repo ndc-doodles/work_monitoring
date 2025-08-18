@@ -131,3 +131,5 @@ SESSION_COOKIE_AGE = 7200  # 2 hours in seconds (optional if you use the middlew
 SESSION_SAVE_EVERY_REQUEST = False  # Only update when new activity detected
 
 LOGIN_URL = 'admin_login'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

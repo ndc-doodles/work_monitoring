@@ -44,15 +44,19 @@ class AssignedProject(models.Model):
     team = models.ForeignKey('Team', on_delete=models.CASCADE)
     assigned_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='assigned_projects')
     assigned_to = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
-    
+
     project_name = models.CharField(max_length=200)
-    project_type = models.CharField(max_length=100)  # Client, Company, Template, etc.
-    category = models.CharField(max_length=100, blank=True, null=True)  # Optional (e.g. Static, Poster)
+    project_type = models.CharField(max_length=100)  
+    category = models.CharField(max_length=100, blank=True, null=True)  
     description = models.TextField(blank=True)
     deadline = models.DateField()
     date_assigned = models.DateField(default=timezone.now)
-    
-    additional_notes = models.TextField(blank=True, null=True)  # Optional
+
+    additional_notes = models.TextField(blank=True, null=True)
+
+    # 🔽 New fields
+    attachment = models.FileField(upload_to="project_files/", blank=True, null=True)
+    image = models.ImageField(upload_to="project_images/", blank=True, null=True)
 
     def __str__(self):
         return f"{self.project_name} → {self.assigned_to}"

@@ -38,7 +38,8 @@
   </div>
     <h2 class="text-2xl font-semibold mb-4 text-purple-300 uppercase mt-10">Assign a New Project</h2>
 
-<form method="POST" class="border border-2 p-6 space-y-4 max-w-7xl mx-auto">
+<form method="POST" enctype="multipart/form-data" 
+      class="border border-2 p-6 space-y-4 max-w-7xl mx-auto">
   {% csrf_token %}
 
   <!-- Team (Readonly) -->
@@ -54,56 +55,74 @@
     Department:
     <select name="department" id="departmentSelect" required
             class="w-full mt-4 p-2 border rounded bg-transparent">
-      <option value="" >Select department</option>
+      <option value="">Select department</option>
       {% for dept in departments %}
-        <option value="{{ dept.id }}"class="bg-transparent text-black">{{ dept.name }}</option>
+        <option value="{{ dept.id }}" class="bg-transparent text-black">{{ dept.name }}</option>
       {% endfor %}
     </select>
   </label>
 
   <!-- Assign To -->
   <label class="block">
-  Assign To:
-  <select id="assignedToSelect" name="assigned_to" required
-          class="w-full mt-4 p-2 border rounded bg-transparent ">
-    <option value="" class="text-black">Select a member</option>
-  </select>
-</label>
+    Assign To:
+    <select id="assignedToSelect" name="assigned_to" required
+            class="w-full mt-4 p-2 border rounded bg-transparent ">
+      <option value="" class="text-black">Select a member</option>
+    </select>
+  </label>
 
-
-  <!-- Remaining fields (unchanged) -->
+  <!-- Work Name -->
   <label class="block">
     Work Name:
     <input type="text" name="project_name" required
            class="w-full mt-4 p-2 border rounded bg-transparent" />
   </label>
 
+  <!-- Work Type -->
   <label class="block">
     Work Type (Client, Company, etc.):
     <input type="text" name="project_type" required
            class="w-full mt-4 p-2 border rounded bg-transparent" />
   </label>
 
+  <!-- Category -->
   <label class="block">
     Category (Optional - e.g., Static, Poster):
     <input type="text" name="category"
            class="w-full mt-4 p-2 border rounded bg-transparent" />
   </label>
 
+  <!-- Description -->
   <label class="block">
     Description:
     <textarea name="description" class="w-full p-2 border mt-4 rounded bg-transparent"></textarea>
   </label>
 
+  <!-- Deadline -->
   <label class="block">
     Deadline:
     <input type="date" name="deadline" required
            class="w-full p-2 mt-4 border rounded bg-transparent" />
   </label>
 
+  <!-- Additional Notes -->
   <label class="block">
     Additional Notes:
     <textarea name="additional_notes" class="w-full p-2 border mt-4 rounded bg-transparent"></textarea>
+  </label>
+
+  <!-- File Upload -->
+  <label class="block">
+    Upload File (PDF, DOCX, ZIP, etc.):
+    <input type="file" name="attachment"
+           class="w-full p-2 mt-4 border rounded bg-transparent" />
+  </label>
+
+  <!-- Image Upload -->
+  <label class="block">
+    Upload Image:
+    <input type="file" name="image" accept="image/*"
+           class="w-full p-2 mt-4 border rounded bg-transparent" />
   </label>
 
   <button type="submit"
@@ -111,6 +130,217 @@
     Assign Project
   </button>
 </form>
+
+<main class="pt-24 ">
+  <h1 class="text-2xl font-bold mb-6">Assigned Projects</h1>
+
+  <div class="overflow-x-auto  shadow-md rounded-lg">
+    <table class="w-full text-sm text-left border border-gray-200">
+      <thead class="bg-gray-100 text-gray-700">
+        <tr>
+          <th class="px-4 py-2 border">Project Name</th>
+          <th class="px-4 py-2 border">Type</th>
+          <th class="px-4 py-2 border">Category</th>
+          <th class="px-4 py-2 border">Description</th>
+          <th class="px-4 py-2 border">Deadline</th>
+          <th class="px-4 py-2 border">Date Assigned</th>
+          <th class="px-4 py-2 border">Assigned By</th>
+          <th class="px-4 py-2 border">Notes</th>
+          <th class="px-4 py-2 border">Files</th>
+          <th class="px-4 py-2 border">Actions</th>
+
+        </tr>
+      </thead>
+      <tbody>
+        {% for project in assigned_projects %}
+        <tr class="bg-transparent">
+          <td class="px-4 py-2 border font-semibold">{{ project.project_name }}</td>
+          <td class="px-4 py-2 border">{{ project.project_type }}</td>
+          <td class="px-4 py-2 border">{{ project.category|default:"-" }}</td>
+<td class="px-4 py-2 border">
+  {{ project.description|truncatewords:10 }}
+  {% if project.description|length > 50 %}
+    <button onclick="openDescriptionModal(`{{ project.description|escapejs }}`)" 
+            class="text-blue-500 underline ml-2">
+      Read More
+    </button>
+  {% endif %}
+</td>
+
+          <td class="px-4 py-2 border text-red-500 font-medium">{{ project.deadline }}</td>
+          <td class="px-4 py-2 border">{{ project.date_assigned }}</td>
+          <td class="px-4 py-2 border">{{ project.assigned_by.name }}</td>
+          <td class="px-4 py-2 border">{{ project.additional_notes|default:"-" }}</td>
+          <td class="px-4 py-2 border">
+            {% if project.attachment %}
+              <a href="{{ project.attachment.url }}" target="_blank" 
+                 class="text-blue-400 underline hover:text-blue-600">📎 Attachment</a><br>
+            {% endif %}
+            {% if project.image %}
+              <a href="{{ project.image.url }}" target="_blank" 
+                 class="text-green-400 underline hover:text-green-600">🖼️ Image</a>
+            {% endif %}
+            {% if not project.attachment and not project.image %}
+              -
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 border text-center w-full">
+  <!-- Edit button (opens modal) -->
+  <button 
+    onclick="openEditModal('{{ project.id }}', '{{ project.project_name }}', '{{ project.project_type }}', '{{ project.category }}', '{{ project.description }}', '{{ project.deadline }}', '{{ project.additional_notes }}', '{{ project.assigned_to.id }}')" 
+    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded">
+    Edit
+  </button>
+
+  <!-- Delete button (form submission) -->
+  <form action="{% url 'delete_assigned_project' project.id %}" method="post" class="inline">
+    {% csrf_token %}
+    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
+      Delete
+    </button>
+  </form>
+</td>
+
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" class="px-4 py-4 text-center text-gray-500">
+            No projects assigned yet.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</main>
+
+
+<div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white text-black rounded-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto p-6 relative">
+    <button onclick="closeEditModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl">&times;</button>
+    <h2 class="text-xl font-semibold mb-4">Edit Project</h2>
+
+    <form id="editForm" method="post" enctype="multipart/form-data" class="space-y-3">
+      {% csrf_token %}
+      <input type="hidden" id="editProjectId" name="project_id">
+
+      <!-- Team (readonly) -->
+      <div>
+        <label class="block mb-1">Team</label>
+        <input type="text" value="{{ team.name }}" readonly class="w-full border rounded p-2 bg-gray-100" />
+        <input type="hidden" name="team" value="{{ team.id }}">
+      </div>
+
+      <!-- Department -->
+      <div>
+        <label class="block mb-1">Department</label>
+        <select id="editDepartment" name="department" class="w-full border rounded p-2">
+          {% for dept in departments %}
+            <option value="{{ dept.id }}" {% if project.team.department.id == dept.id %}selected{% endif %}>
+              {{ dept.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Assign To -->
+      <div>
+        <label class="block mb-1">Assign To</label>
+        <select id="editAssignedTo" name="assigned_to" class="w-full border rounded p-2">
+          {% for member in team.user_set.all %}
+            <option value="{{ member.id }}" {% if project.assigned_to.id == member.id %}selected{% endif %}>
+              {{ member.username }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Work Name -->
+      <div>
+        <label class="block mb-1">Work Name</label>
+        <input type="text" id="editProjectName" name="project_name" 
+               value="{{ project.project_name }}" 
+               class="w-full border rounded p-2">
+      </div>
+
+      <!-- Work Type -->
+      <div>
+        <label class="block mb-1">Work Type</label>
+        <input type="text" id="editProjectType" name="project_type" 
+               value="{{ project.project_type }}" 
+               class="w-full border rounded p-2">
+      </div>
+
+      <!-- Category -->
+      <div>
+        <label class="block mb-1">Category</label>
+        <input type="text" id="editCategory" name="category" 
+               value="{{ project.category }}" 
+               class="w-full border rounded p-2">
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="block mb-1">Description</label>
+        <textarea id="editDescription" name="description" class="w-full border rounded p-2">{{ project.description }}</textarea>
+      </div>
+
+      <!-- Deadline -->
+      <div>
+        <label class="block mb-1">Deadline</label>
+        <input type="date" id="editDeadline" name="deadline" 
+               value="{{ project.deadline|date:'Y-m-d' }}" 
+               class="w-full border rounded p-2">
+      </div>
+
+      <!-- Additional Notes -->
+      <div>
+        <label class="block mb-1">Additional Notes</label>
+        <textarea id="editNotes" name="additional_notes" class="w-full border rounded p-2">{{ project.additional_notes }}</textarea>
+      </div>
+
+      <!-- File Upload -->
+      <div>
+        <label class="block mb-1">Upload File</label>
+        <input type="file" name="attachment" class="w-full border rounded p-2">
+        {% if project.attachment %}
+          <p class="text-sm mt-1">Current: 
+            <a href="{{ project.attachment.url }}" target="_blank" class="text-blue-500 underline">View Attachment</a>
+          </p>
+        {% endif %}
+      </div>
+
+      <!-- Image Upload -->
+      <div>
+        <label class="block mb-1">Upload Image</label>
+        <input type="file" name="image" accept="image/*" class="w-full border rounded p-2">
+        {% if project.image %}
+          <p class="text-sm mt-1">Current: 
+            <a href="{{ project.image.url }}" target="_blank" class="text-green-500 underline">View Image</a>
+          </p>
+        {% endif %}
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="text-right sticky bottom-0 bg-white py-3">
+        <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- Description Modal -->
+<div id="descriptionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg w-full max-w-lg p-6 relative">
+    <button onclick="closeDescriptionModal()" 
+            class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl">&times;</button>
+    <h2 class="text-lg font-semibold mb-4">Project Description</h2>
+    <p id="descriptionContent" class="text-gray-700 whitespace-pre-line"></p>
+  </div>
+</div>
+
+
+
 
 <script>
 document.getElementById("departmentSelect").addEventListener("change", function() {
@@ -141,47 +371,7 @@ document.getElementById("departmentSelect").addEventListener("change", function(
 </script>
 
 
-<main class="pt-24 px-12">
-  <h1 class="text-2xl font-bold mb-6">Assigned Projects</h1>
-
-  <div class="overflow-x-auto bg-white shadow-md rounded-lg">
-    <table class="min-w-full text-sm text-left border border-gray-200">
-      <thead class="bg-gray-100 text-gray-700">
-        <tr>
-          <th class="px-4 py-2 border">Project Name</th>
-          <th class="px-4 py-2 border">Type</th>
-          <th class="px-4 py-2 border">Category</th>
-          <th class="px-4 py-2 border">Description</th>
-          <th class="px-4 py-2 border">Deadline</th>
-          <th class="px-4 py-2 border">Date Assigned</th>
-          <th class="px-4 py-2 border">Assigned By</th>
-          <th class="px-4 py-2 border">Notes</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for project in projects %}
-        <tr class="hover:bg-gray-50">
-          <td class="px-4 py-2 border font-semibold">{{ project.project_name }}</td>
-          <td class="px-4 py-2 border">{{ project.project_type }}</td>
-          <td class="px-4 py-2 border">{{ project.category|default:"-" }}</td>
-          <td class="px-4 py-2 border">{{ project.description|truncatewords:10 }}</td>
-          <td class="px-4 py-2 border text-red-500 font-medium">{{ project.deadline }}</td>
-          <td class="px-4 py-2 border">{{ project.date_assigned }}</td>
-          <td class="px-4 py-2 border">{{ project.assigned_by.name }}</td>
-          <td class="px-4 py-2 border">{{ project.additional_notes|default:"-" }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="8" class="px-4 py-4 text-center text-gray-500">
-            No projects assigned yet.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</main>
-
+  <script src="{% static 'js/teamlead.js' %}"></script>
 
 
 </body>

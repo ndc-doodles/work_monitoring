@@ -32,3 +32,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+
+
+function openDescriptionModal(description) {
+    document.getElementById('descriptionContent').innerText = description;
+    document.getElementById('descriptionModal').classList.remove('hidden');
+    document.getElementById('descriptionModal').classList.add('flex');
+  }
+
+  function closeDescriptionModal() {
+    document.getElementById('descriptionModal').classList.add('hidden');
+    document.getElementById('descriptionModal').classList.remove('flex');
+  }

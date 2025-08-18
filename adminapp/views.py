@@ -195,21 +195,22 @@ def admin_logout(request):
 
 def welcome(request):
     return render(request, 'welcome.html')
+
 def teamlead_login(request):
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
 
         try:
-            teamlead = User.objects.get(email=email, password=password, role="Team Lead")
-            request.session["user_id"] = teamlead.id   # 👈 Fixed key
-            print("✅ Login success:", teamlead.id)  
-            return redirect("teamlead_index")
+            user = User.objects.get(email=email, password=password, role="Team Lead")
+            request.session['teamlead_id'] = user.id   # ✅ important
+            return redirect('teamlead_index')
         except User.DoesNotExist:
             messages.error(request, "Invalid email or password")
-            return redirect("teamlead_login")
+            return redirect('teamlead_login')
 
     return render(request, "teamlead_login.html")
+
 
 
 def teamlead_index(request):
@@ -313,17 +314,17 @@ def teammember_login(request):
 
         try:
             user = User.objects.get(email=email, password=password, role="Team Member")
-            # Store the user ID in session
-            request.session['teammember_id'] = user.id
-            return redirect('teammember_assigned_projects')  # Redirect after login
+            request.session['user_id'] = user.id   # ✅ fixed key
+            return redirect('teammember_index')
         except User.DoesNotExist:
             messages.error(request, "Invalid email or password")
             return redirect('teammember_login')
 
     return render(request, "teammember_login.html")
 
+
 def teammember_index(request):
-    user_id = request.session.get('user_id')
+    user_id = request.session.get('user_id')  # ✅ now matches
     print("🔍 Session user_id:", user_id)
     if not user_id:
         return redirect('teammember_login')
@@ -335,7 +336,7 @@ def teammember_index(request):
 
     same_team_members = User.objects.filter(team=user.team, role='Team Member').exclude(id=user.id)
 
-    today = localdate()  # gets current date in local timezone
+    today = localdate()
 
     morning_report = Report.objects.filter(user=user, type='morning', submitted_at__date=today).first()
     evening_report = Report.objects.filter(user=user, type='evening', submitted_at__date=today).first()
@@ -375,7 +376,7 @@ def all_reports_view(request):
     })
 
 def teamlead_assign_project(request):
-    # Check if teamlead is logged in
+    # ✅ Check if teamlead is logged in
     teamlead_id = request.session.get('teamlead_id')
     if not teamlead_id:
         return redirect('teamlead_login')
@@ -384,7 +385,7 @@ def teamlead_assign_project(request):
     team = teamlead.team
     departments = Department.objects.all()  # For department dropdown
 
-    # Handle form submission
+    # ✅ Handle form submission
     if request.method == 'POST':
         project_name = request.POST.get('project_name')
         project_type = request.POST.get('project_type')
@@ -395,11 +396,15 @@ def teamlead_assign_project(request):
         assigned_to_id = request.POST.get('assigned_to')
         department_id = request.POST.get('department')
 
-        # Get department and assigned user objects
+        # ✅ Files
+        attachment = request.FILES.get('attachment')  # File upload
+        image = request.FILES.get('image')            # Image upload
+
+        # ✅ Get department and assigned user objects
         department = Department.objects.get(id=department_id)
         assigned_to = User.objects.get(id=assigned_to_id)
 
-        # Create the assigned project
+        # ✅ Create the assigned project with files
         AssignedProject.objects.create(
             project_name=project_name,
             project_type=project_type,
@@ -411,17 +416,19 @@ def teamlead_assign_project(request):
             team=team,
             assigned_by=teamlead,
             assigned_to=assigned_to,
+            attachment=attachment,   # new
+            image=image              # new
         )
 
         return redirect('teamlead_assign_project')  # Reload page to see new project
 
-    # Fetch all projects assigned by this teamlead for this team
+    # ✅ Fetch all projects assigned by this teamlead for this team
     assigned_projects = AssignedProject.objects.filter(
         assigned_by=teamlead,
         team=team
     ).order_by('-date_assigned')  # latest projects first
 
-    # Render template with form data and assigned projects
+    # ✅ Render template with form data and assigned projects
     context = {
         'team': team,
         'departments': departments,
@@ -451,7 +458,6 @@ def get_team_members(request):
     return JsonResponse({"members": list(members)})
    
 
-
 def teammember_assigned_projects(request):
     # Get logged-in Team Member ID from session
     teammember_id = request.session.get('teammember_id')
@@ -469,6 +475,7 @@ def teammember_assigned_projects(request):
         assigned_to=user
     ).order_by('-date_assigned')  # latest first
 
+    # Pass projects to template (with file and image URLs if they exist)
     return render(request, 'teammember_assignedprojects.html', {
         'projects': projects
     })
@@ -479,24 +486,43 @@ def teammember_assigned_projects(request):
 def edit_assigned_project(request, project_id):
     project = get_object_or_404(AssignedProject, id=project_id)
     teamlead_id = request.session.get('teamlead_id')
-    if project.assigned_by.id != teamlead_id:
+
+    # Ensure only the team lead who assigned can edit
+    if not teamlead_id or project.assigned_by.id != teamlead_id:
+        messages.error(request, "You are not authorized to edit this project.")
         return redirect('teamlead_assign_project')
 
     if request.method == 'POST':
-        project.project_name = request.POST.get('project_name')
-        project.project_type = request.POST.get('project_type')
-        project.category = request.POST.get('category')
-        project.description = request.POST.get('description')
-        project.deadline = request.POST.get('deadline')
-        project.additional_notes = request.POST.get('additional_notes')
-        assigned_to_id = request.POST.get('assigned_to')
-        project.assigned_to = User.objects.get(id=assigned_to_id)
-        project.save()
+        try:
+            project.project_name = request.POST.get('project_name')
+            project.project_type = request.POST.get('project_type')
+            project.category = request.POST.get('category')
+            project.description = request.POST.get('description')
+            project.deadline = request.POST.get('deadline')
+            project.additional_notes = request.POST.get('additional_notes')
+
+            # Handle assigned_to update safely
+            assigned_to_id = request.POST.get('assigned_to')
+            if assigned_to_id:
+                project.assigned_to = User.objects.get(id=assigned_to_id)
+
+            # Handle file/image uploads if provided
+            if request.FILES.get('attachment'):
+                project.attachment = request.FILES['attachment']
+            if request.FILES.get('image'):
+                project.image = request.FILES['image']
+
+            project.save()
+            messages.success(request, "Project updated successfully ✅")
+        except Exception as e:
+            messages.error(request, f"Error updating project: {str(e)}")
+
         return redirect('teamlead_assign_project')
 
+    # If GET, render inside same page modal
     departments = Department.objects.all()
     team = project.team
-    return render(request, 'edit_assigned_project.html', {
+    return render(request, 'teamlead_assign_project.html', {
         'project': project,
         'departments': departments,
         'team': team,
@@ -506,6 +532,12 @@ def edit_assigned_project(request, project_id):
 def delete_assigned_project(request, project_id):
     project = get_object_or_404(AssignedProject, id=project_id)
     teamlead_id = request.session.get('teamlead_id')
-    if project.assigned_by.id == teamlead_id:
+
+    # Allow only the assigning lead to delete
+    if teamlead_id and project.assigned_by and project.assigned_by.id == teamlead_id:
         project.delete()
+        messages.success(request, "Project deleted successfully ❌")
+    else:
+        messages.error(request, "You are not authorized to delete this project.")
+
     return redirect('teamlead_assign_project')
