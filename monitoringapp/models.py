@@ -28,25 +28,23 @@ class User(models.Model):
         ('inactive', 'Inactive'),
     )
 
-    name = models.CharField(max_length=150)  
-    employee_id = models.CharField(max_length=50, unique=True)  
+    name = models.CharField(max_length=150)
+    employee_id = models.CharField(max_length=50, unique=True)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=15, blank=True, null=True)
 
-    department = models.CharField(max_length=100)
-    team = models.CharField(max_length=100, blank=True, null=True)
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True)
+    team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True)
+  
+
     job_Position = models.CharField(max_length=100)
-
     designation = models.CharField(max_length=100)
-
     work_location = models.CharField(max_length=150, blank=True, null=True)
-    joining_date = models.DateField(auto_now_add=True) 
+    joining_date = models.DateField(auto_now_add=True)
 
     username = models.CharField(max_length=100, unique=True)
-    password = models.CharField(max_length=128)  
-
+    password = models.CharField(max_length=128)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
-
     profile_image = models.ImageField(upload_to='user_images/', blank=True, null=True)
 
     def __str__(self):

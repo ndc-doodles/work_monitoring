@@ -57,30 +57,29 @@ def delete_team(request, pk):
 
 
 def admin_usermanagement(request):
-
     users = User.objects.all()
+    departments = Department.objects.all()
+    teams = Team.objects.all()
+
     if request.method == "POST":
         name = request.POST.get("name")
-        employee_id = request.POST.get("employee_id")   # ✅ Added
+        employee_id = request.POST.get("employee_id")
         email = request.POST.get("email")
         phone = request.POST.get("phone")
         department = request.POST.get("department")
-        team = request.POST.get("team")                 # ✅ Added
+        team = request.POST.get("team")
         job_Position = request.POST.get("job_Position")
         designation = request.POST.get("designation")
-        work_location = request.POST.get("work_location")  # ✅ Added
-        joining_date = request.POST.get("joining_date")    # ✅ Added (but careful, model has auto_now_add=True)
+        work_location = request.POST.get("work_location")
         username = request.POST.get("username")
-        password = request.POST.get("password")  
-        status = request.POST.get("status")             # ✅ Added
+        password = request.POST.get("password")
+        status = request.POST.get("status")
         image = request.FILES.get("profile_image")
 
-        # ✅ Check if username already exists
         if User.objects.filter(username=username).exists():
             messages.error(request, "⚠️ Username already exists. Please choose another one.")
             return redirect("admin_usermanagement")
 
-        # ✅ Create only if username is unique
         User.objects.create(
             name=name,
             employee_id=employee_id,
@@ -91,19 +90,21 @@ def admin_usermanagement(request):
             job_Position=job_Position,
             designation=designation,
             work_location=work_location,
-            # ⚠️ joining_date is auto_now_add=True → You don’t need to pass it,
-            # remove from model or make it models.DateField() if you want custom input
             username=username,
-            password=password,  
+            password=password,
             status=status,
             profile_image=image
         )
         messages.success(request, "✅ User created successfully!")
         return redirect("admin_usermanagement")
 
-    return render(request, "admin_usermanagement.html", {"users": users})
-
-
+    context = {
+        "users": users,
+        "departments": departments,
+        "teams": teams,
+    }
+    return render(request, "admin_usermanagement.html", context)
+    
 
 
 def delete_user(request, id):
