@@ -1,0 +1,110 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Lead Dashboard - Cybexel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+</head>
+<body class="bg-black text-white font-sans select-none">
+
+<div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#250f1e] text-white p-6 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+  <div class="flex items-center justify-between mb-6">
+    <div class="w-full flex justify-center select-none">
+      <img src="{% static 'images/logo.png' %}" alt="Logo" class="w-32 h-32 object-contain">
+    </div>
+    <button class="menu-toggle md:hidden text-white text-2xl max-md:mt-[-9rem]">&times;</button>
+  </div>
+  <nav class="select-none">
+    <ul class="space-y-8 text-sm">
+      <li>
+        <a href="{% url 'teamlead_dashboard' %}" class="block py-2 px-4 rounded bg-white text-[#151a37]">
+          Team Lead Dashboard
+        </a>
+      </li>
+    </ul>
+  </nav>
+</div>
+
+<button class="menu-toggle md:hidden fixed top-8 left-4 z-50 text-white p-2 rounded shadow-lg">
+  &#9776;
+</button>
+
+<div class="ml-0 md:ml-64 p-6 mt-20 ">
+  
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 max-w-4xl">
+    <div class=" bg-[#250f1e] p-6 rounded-lg shadow-md h-[200px] ">
+      <h3 class="text-gray-300 text-xl mb-20">Total Users</h3>
+      <p class="text-4xl font-bold text-[#f047ba]">{{ total_users }}</p>
+    </div>
+    <div class="bg-[#250f1e] p-6 rounded-lg shadow-md h-[200px]">
+      <h3 class="text-gray-300 text-xl mb-20">Active Members</h3>
+      <p class="text-2xl font-bold text-green-600">{{ active_members }}</p>
+    </div>
+    <div class="bg-[#250f1e] p-6 rounded-lg shadow-md h-[200px]">
+      <h3 class="text-gray-300 text-xl mb-20">Inactive Members</h3>
+      <p class="text-2xl font-bold text-red-500">{{ inactive_members }}</p>
+    </div>
+  </div>
+
+  <div class="border-4 border-[#250f1e] p-6 rounded-lg shadow-md mt-20">
+    <h2 class="text-xl font-semibold mb-4">Announcements</h2>
+    
+    <div class="space-y-3 mb-4 max-h-40 overflow-y-auto">
+      {% for announcement in announcements %}
+        <div class="p-3 bg-gray-50/10 border rounded">
+          <p class="text-gray-200">{{ announcement.message }}</p>
+          <span class="text-xs text-gray-200">Posted on {{ announcement.created_at }}</span>
+        </div>
+      {% empty %}
+        <p class="text-gray-100">No announcements yet.</p>
+      {% endfor %}
+    </div>
+
+    <form method="POST" action="">
+      {% csrf_token %}
+      <textarea name="message" rows="2" class="w-full border p-2 rounded mb-2" placeholder="Write a new announcement..."></textarea>
+      <button type="submit" class="bg-[#250f1e] text-white px-4 py-2 rounded">Post</button>
+    </form>
+  </div>
+
+
+  <div class="border border-[#250f1e] p-6 rounded-lg shadow-md mb-8 overflow-x-auto mt-20">
+    <h2 class="text-xl font-semibold mb-4">Team Members</h2>
+    <table class="w-full border-collapse border border-gray-200">
+      <thead class="">
+        <tr>
+          <th class="border p-2 text-left">Name</th>
+          <th class="border p-2 text-left">Email</th>
+          <th class="border p-2 text-left">Role</th>
+          <th class="border p-2 text-left">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for member in team_members %}
+        <tr>
+          <td class="border p-2">{{ member.name }}</td>
+          <td class="border p-2">{{ member.email }}</td>
+          <td class="border p-2">{{ member.job_Position }}</td>
+          <td class="border p-2">
+            {% if member.status == "active" %}
+              <span class="text-green-600 font-semibold">Active</span>
+            {% else %}
+              <span class="text-red-500 font-semibold">Inactive</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+
+
+
+</div>
+
+</body>
+</html>

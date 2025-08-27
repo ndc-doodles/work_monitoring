@@ -1,0 +1,83 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - Cybexel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+
+</head>
+<body class="bg-black text-white font-sans select-none">
+
+<div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#250f1e] text-white p-6 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+  <div class="flex items-center justify-between mb-6">
+    <div class="w-full flex justify-center select-none">
+      <img src="{% static 'images/logo.png' %}" alt="Logo" class="w-32 h-32 object-contain">
+    </div>
+    <button class="menu-toggle md:hidden text-white text-2xl max-md:mt-[-9rem]">&times;</button>
+  </div>
+  <nav class="select-none">
+    <ul class="space-y-8 text-sm">
+      <li>
+        <a href="{% url 'teammember_dashboard' %}" class="block py-2 px-4 rounded bg-white text-black">Team member Dashboard</a>
+      </li>
+    </ul>
+  </nav>
+</div>
+
+<button class="menu-toggle md:hidden fixed top-8 left-4 z-50 text-white p-2 rounded shadow-lg">
+  &#9776;
+</button>
+
+
+<div class="ml-0 md:ml-64 p-6 mt-20">
+
+<div class="bg-transparent p-6 rounded-2xl shadow mb-6">
+  <h2 class="text-xl font-bold mb-4 text-white">Announcements</h2>
+
+  {% if announcements %}
+    {% for ann in announcements %}
+      <div class="w-full p-3 rounded-lg border-2 border-[#250f1e] bg-transparent text-white mb-4">
+        <p class="font-semibold">{{ ann.title }}</p>
+        <p>{{ ann.message }}</p>
+        <p class="text-xs text-gray-400">Posted at: {{ ann.created_at|date:"M d, H:i" }}</p>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="text-gray-400">No announcements in the last 12 hours.</p>
+  {% endif %}
+</div>
+
+  <!-- Reports Section -->
+  <div class="grid md:grid-cols-2 gap-6">
+    
+  <!-- Morning Report -->
+  <div class="border-2 border-[#250f1e] text-white p-6 rounded-2xl shadow">
+    <h2 class="text-lg font-bold mb-4">Morning Report</h2>
+    <textarea class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#250f1e]" 
+              rows="5" placeholder="Enter morning report..."></textarea>
+    <button class="mt-4 bg-[#250f1e] text-white px-6 py-2 rounded-lg shadow hover:bg-[#3a1731] transition">
+      Post
+    </button>
+  </div>
+
+  <!-- Evening Report -->
+  <div class="border-2 border-[#250f1e] text-white p-6 rounded-2xl shadow">
+    <h2 class="text-lg font-bold mb-4">Evening Report</h2>
+    <textarea class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#250f1e]" 
+              rows="5" placeholder="Enter evening report..."></textarea>
+    <button class="mt-4 bg-[#250f1e] text-white px-6 py-2 rounded-lg shadow hover:bg-[#3a1731] transition">
+      Post
+    </button>
+  </div>
+
+</div>
+
+
+</div>
+</body>
+
+</html>

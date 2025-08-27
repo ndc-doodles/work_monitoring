@@ -1,0 +1,14 @@
+input, select, textarea {
+  background-color: transparent !important;
+  color: white !important; /* keep text visible */
+}
+
+input:focus, select:focus, textarea:focus {
+  background-color: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+    html, body {
+  overflow-x: hidden;
+  width: 100%;
+}

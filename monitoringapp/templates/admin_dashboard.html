@@ -1,0 +1,145 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - Cybexel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+
+
+</head>
+<body class="bg-black text-[#151a37] font-sans select-none">
+
+  
+
+
+<div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#250f1e] text-white p-6 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+  <div class="flex items-center justify-between mb-6">
+    <div class="w-full flex justify-center select-none">
+      <img src="./static/images/logo.png" alt="Logo" class="w-32 h-32 object-contain">
+    </div>
+<button class="menu-toggle md:hidden text-white text-2xl max-md:mt-[-9rem]">&times;</button>
+  </div>
+  <nav class="select-none">
+    <ul class="space-y-8 text-sm">
+      <li>
+        <a href="{% url 'admin_dashboard' %}" class="block py-2 px-4 rounded bg-white text-[#151a37]">Dashboard</a>
+        <a href="{% url 'admin_usermanagement' %}" class="block py-2 px-4 rounded hover:bg-white hover:text-[#151a37]">User Management</a>
+
+      </li>
+    </ul>
+  </nav>
+</div>
+
+<button class="menu-toggle md:hidden fixed top-8 left-4 z-50  text-white p-2 rounded shadow-lg">
+  &#9776;
+</button>
+
+<div class="bg-[#181316] w-full h-28 flex items-center justify-center select-none">
+  <h1 class="uppercase text-white text-4xl font-bold">Admin Dashboard</h1>
+</div>
+
+
+<div class="flex-1 p-6 mt-6 md:mt-20 md:ml-64 max-w-full overflow-x-hidden">
+  <div class="grid md:grid-cols-2 gap-6">
+
+    <div class="border-2 border-[#250f1e] p-6 rounded-lg shadow-lg text-white">
+      <h2 class="text-xl font-bold mb-4">Add Department</h2>
+      <form method="POST">
+        {% csrf_token %}
+        <input type="text" name="department_name" placeholder="Department Name" required
+               class="w-full mb-4 px-3 py-2 rounded text-white bg-transparent border ">
+        <button type="submit" name="add_department"
+                class="px-4 py-2 bg-[#250f1e] rounded  transition">
+          Add Department
+        </button>
+      </form>
+
+      <h3 class="mt-6 font-semibold">Existing Departments</h3>
+      <table class="table-auto w-full mt-2 border border-gray-300">
+  <thead>
+    <tr class="bg-gray-800">
+      <th class="px-4 py-2 border">#</th>
+      <th class="px-4 py-2 border">Department Name</th>
+      <th class="px-4 py-2 border">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for dept in departments %}
+    <tr>
+      <td class="px-4 py-2 border">{{ forloop.counter }}</td>
+      <td class="px-4 py-2 border">{{ dept.name }}</td>
+      <td class="px-4 py-2 border">
+        <form action="{% url 'delete_department' dept.id %}" method="post" onsubmit="return confirm('Delete this department?');">
+          {% csrf_token %}
+          <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+            Delete
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="3" class="px-4 py-2 text-center border">No departments added yet.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+    </div>
+
+   <div class="border-2 border-[#250f1e] p-6 rounded-lg shadow-lg text-white">
+  <h2 class="text-xl font-bold mb-4">Add Team</h2>
+  <form method="POST">
+    {% csrf_token %}
+    <input type="text" name="team_name" placeholder="Team Name" required
+           class="w-full mb-4 px-3 py-2 rounded text-white bg-transparent border">
+    
+    <button type="submit" name="add_team"
+            class="px-4 py-2 bg-[#250f1e] rounded transition">
+      Add Team
+    </button>
+  </form>
+
+  <h3 class="mt-6 font-semibold">Existing Teams</h3>
+  <table class="table-auto w-full mt-2 border border-gray-300">
+  <thead>
+    <tr class="bg-gray-800">
+      <th class="px-4 py-2 border">#</th>
+      <th class="px-4 py-2 border">Team Name</th>
+      <th class="px-4 py-2 border">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for team in teams %}
+    <tr>
+      <td class="px-4 py-2 border">{{ forloop.counter }}</td>
+      <td class="px-4 py-2 border">{{ team.name }}</td>
+      <td class="px-4 py-2 border">
+        <form action="{% url 'delete_team' team.id %}" method="post" onsubmit="return confirm('Delete this team?');">
+          {% csrf_token %}
+          <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+            Delete
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="3" class="px-4 py-2 text-center border">No teams added yet.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+
+  </div>
+</div>
+
+
+
+<script src="{% static 'js/admin.js' %}"></script>
+</body>
+</html>

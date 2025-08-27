@@ -1,0 +1,305 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Manrope:wght@200..800&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Quicksand:wght@300..700&family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+<style>
+
+</style>
+
+    
+</head>
+
+<body class="bg-[black]">
+
+<nav id="navbar" class="flex justify-between items-center px-6 md:px-20 py-3 fixed w-full top-0 z-50 transition-colors duration-300">
+  
+  <div class="flex items-center space-x-2">
+    <img src="{% static 'images/logo.png' %}" alt="Logo" class="h-16 w-16">
+  </div>
+
+<div class="hidden md:flex space-x-8 text-white text-lg">
+  <a href="#home" class="nav-link hover:text-[#6c024d] font-bold border-b-2 border-[#6c024d]">Home</a>
+  <a href="#about" class="nav-link hover:text-[#6c024d] transition">About</a>
+  <a href="#services" class="nav-link hover:text-[#6c024d] transition">Services</a>
+  <a href="#faq" class="nav-link hover:text-[#6c024d] transition">Faq</a>
+</div>
+
+
+  <div class="flex items-center space-x-4">
+    <a href="{% url 'login' %}"class="hidden md:inline px-5 py-2 bg-[#6c024d] text-white rounded-md hover:bg-[#5c2a4d] transition">
+      Login
+    </a>
+    <button id="menu-toggle" class="md:hidden text-white text-3xl focus:outline-none">
+      ☰
+    </button>
+  </div>
+</nav>
+
+<div id="overlay" class="fixed inset-0 bg-black/50 hidden z-40"></div>
+
+<div id="mobile-menu" class="fixed top-0 right-0 h-full w-3/4 bg-white/90 backdrop-blur-md shadow-lg transform translate-x-full transition-transform duration-300 ease-in-out z-50">
+  <div class="flex flex-col px-8 pt-6 h-full space-y-8 text-lg font-semibold relative">
+    <button id="menu-close" class="absolute top-4 right-8 text-sm text-black hover:text-[#6c024d]">
+      ✕
+    </button>
+   <a href="#home" class="mobile-link nav-link mt-12 text-[#6c024d] transition">Home</a>
+<a href="#about" class="mobile-link nav-link text-black hover:text-[#6c024d] transition">About</a>
+<a href="#services" class="mobile-link nav-link text-black hover:text-[#6c024d] transition">Services</a>
+<a href="#faq" class="mobile-link nav-link text-black hover:text-[#6c024d] transition">Faq</a>
+
+    <a href="{% url 'login' %}" class="px-5 py-2 bg-[#6c024d] text-white rounded-md hover:bg-[#5c2a4d] transition">Login</a>
+  </div>
+</div>
+
+
+
+
+
+
+
+<div id="home" class="relative w-full min-h-[90vh]  overflow-hidden bg-gradient-to-b from-[#0b0b2b] via-[#1b2735] to-[#090a0f]">
+  
+  <div class="stars"></div>
+  <div class="shooting-star"></div>
+  <div class="shooting-star"></div>
+  <div class="shooting-star"></div>
+  <div class="shooting-star"></div>
+  <div class="shooting-star"></div>
+
+  <div class="relative z-10 w-full min-h-[60vh] mt-32 flex flex-col md:flex-row justify-between gap-10 px-6 md:px-20">
+    
+    <div class="w-full md:w-1/2 mt-10 md:mt-28">
+      <p class="bg-[#eb97d233] inline-block rounded-full px-4 py-1 text-white mb-1">
+        Work smarter, not harder.
+      </p>
+      <h1 class="font-bold text-5xl md:text-6xl text-white max-w-5xl mt-1 mb-6">
+CLARITY & CONTROL IN EVERY WORKFLOW      </h1>
+      <p class="text-white">
+        Monitor workflows in real time, eliminate blind spots and empower your team with seamless productivity, sharper insights and smarter decisions that drive lasting success.
+      </p>
+
+      <div class="flex flex-row items-start gap-4">
+        <button class="bg-white mt-6 text-base rounded-md px-4 py-2 text-[#6c024d] shadow hover:bg-gray-100 transition">
+          Explore
+        </button>
+        <button class="border-2 border-white mt-6 text-base rounded-md px-4 py-2 text-white shadow hover:bg-gray-100 transition hover:text-black">
+          Services
+        </button>
+      </div>
+    </div>
+
+    <div class="w-full md:w-1/2 flex items-center justify-center">
+      <img src="{% static 'images/bg-header.png' %}" alt="Header Image" class="w-full h-full max-h-[400px] md:max-h-[600px] object-contain">
+    </div>
+
+  </div>
+</div>
+
+
+<div class="flex items-center justify-center select-none focus:outline-none" tabindex="-1">
+  <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24">
+    <path fill="#6c024d" d="m7 10l5 5l5-5z"/>
+  </svg>
+</div>
+
+
+
+
+
+<div id="about" class="mb-24"></div>
+
+
+
+
+<div class=" max-w-[90%] mx-auto h-auto ">
+
+  <div class=" w-full h-full">
+       <h1 class="text-white text-4xl  md:text-6xl">ABOUT US</h1>
+       <p id="animated-text"class=" text-2xl md:text-4xl text-gray-400 max-w-7xl text-opacity-60 w-full mt-10"><span class="invisible">dhkdshfkhdfsdfds</span>We help organizations gain complete clarity, seamless control and improved efficiency over every workflow, ensuring that tasks are monitored, tracked and delivered with precision.</p>
+  </div>
+<hr class="my-[-4.3rem] md:my-6 border-t-1 border-gray-500">
+
+  <div class=" w-full h-auto flex flex-col md:flex-row justify-between gap-0 md:gap-20">
+    <div class=" w-full h-full max-md:mt-[6rem]">
+    <h1 class="font-bold text-2xl text-white">WHAT WE DO</h1>
+    <img class="pl-[12rem] max-md:h-[14rem] md:pl-44"src="{% static 'images/about_section.png' %}">
+    </div>
+
+    <div class=" w-full h-auto">
+      <p  class="text-gray-300">
+        Our Work Monitoring System is designed to transform the way teams and businesses manage their daily operations. By combining task tracking, workflow automation and performance insights into one platform, we eliminate confusion and bring structure to work. With real-time monitoring, easy collaboration and transparent reporting, we empower businesses to stay ahead, meet deadlines and achieve consistent growth. Whether you are a small team or a large enterprise, our system adapts to your needs and ensures that every task is aligned with your goals.
+
+      </p>
+      <p  class="text-gray-300 hidden md:flex ">
+Beyond tracking and automation, our solution focuses on long-term growth and collaboration. Transparent reporting provides leaders with actionable insights, while team members benefit from seamless communication and accountability. Whether you are a small team just starting out or a large enterprise managing multiple projects, our system adapts to your unique needs, helping you scale with confidence and achieve consistent progress.
+      </p>
+
+      <p  class="text-gray-300 hidden md:flex ">
+By combining task tracking, workflow automation, and performance insights into a single solution, we bring order and structure to the workplace. The system ensures that no task is missed, deadlines are consistently met, and teams are always aware of their responsibilities. Real-time monitoring and smart notifications make it easy to identify bottlenecks early, resolve them quickly, and keep projects moving forward without delays.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+
+
+<div id="services" class="mb-24"></div>
+
+<div  class="w-full h-auto mt-20 px-4">
+  <div class="mb-10 text-center">
+    <h1 class="text-white text-4xl md:text-6xl">SERVICES</h1>
+    <p class="text-lg text-gray-300 max-w-2xl mx-auto">
+      Gain complete visibility into every workflow, eliminate hidden inefficiencies, 
+      and empower your team to achieve higher productivity with ease.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto p-6 rounded-xl">
+    
+    <div class="border-2 border-gray-800 cursor-pointer w-full min-h-[320px] p-10 rounded-2xl shadow-lg text-center text-white transform hover:scale-105 transition duration-300">
+      <div class="flex justify-center mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16" viewBox="0 0 24 24" fill="white">
+          <path d="M6.78 4.78a.75.75 0 0 0-1.06-1.06L3.75 5.69l-.47-.47a.75.75 0 0 0-1.06 1.06l1 1a.75.75 0 0 0 1.06 0zm14.47 13.227H9.75l-.102.007a.75.75 0 0 0 .102 1.493h11.5l.102-.007a.75.75 0 0 0-.102-1.493m0-6.507H9.75l-.102.007A.75.75 0 0 0 9.75 13h11.5l.102-.007a.75.75 0 0 0-.102-1.493m0-6.5H9.75l-.102.007A.75.75 0 0 0 9.75 6.5h11.5l.102-.007A.75.75 0 0 0 21.25 5M6.78 17.78a.75.75 0 1 0-1.06-1.06l-1.97 1.97l-.47-.47a.75.75 0 0 0-1.06 1.06l1 1a.75.75 0 0 0 1.06 0zm0-7.56a.75.75 0 0 1 0 1.06l-2.5 2.5a.75.75 0 0 1-1.06 0l-1-1a.75.75 0 1 1 1.06-1.06l.47.47l1.97-1.97a.75.75 0 0 1 1.06 0"/>
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold mb-3">Task Tracking</h2>
+      <p class="text-base leading-relaxed">Easily assign and monitor tasks in real-time to improve productivity.</p>
+    </div>
+
+    <div class="border-2 border-gray-800 cursor-pointer w-full min-h-[320px] p-10 rounded-2xl shadow-lg text-center text-white transform hover:scale-105 transition duration-300">
+      <div class="flex justify-center mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16" viewBox="0 0 24 24" fill="white">
+          <path d="M12 10a4 4 0 1 0 0-8a4 4 0 0 0 0 8m-6.5 3a2.5 2.5 0 1 0 0-5a2.5 2.5 0 0 0 0 5M21 10.5a2.5 2.5 0 1 1-5 0a2.5 2.5 0 0 1 5 0m-9 .5a5 5 0 0 1 5 5v6H7v-6a5 5 0 0 1 5-5m-7 5c0-.693.1-1.362.288-1.994l-.17.014A3.5 3.5 0 0 0 2 17.5V22h3zm17 6v-4.5a3.5 3.5 0 0 0-3.288-3.494c.187.632.288 1.301.288 1.994v6z"/>
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold mb-3">Team Collaboration</h2>
+      <p class="text-base leading-relaxed">Connect your team members with seamless communication tools.</p>
+    </div>
+
+    <div class="border-2 border-gray-800 cursor-pointer w-full min-h-[320px] p-10 rounded-2xl shadow-lg text-center text-white transform hover:scale-105 transition duration-300">
+      <div class="flex justify-center mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16" viewBox="0 0 24 24" fill="white">
+          <path d="M2 17.87a1 1 0 0 0-1 1v1.5a.25.25 0 0 0 .25.25h3.5a.25.25 0 0 0 .25-.25v-1.5a1 1 0 0 0-1-1Zm6-3a1 1 0 0 0-1 1v4.5a.25.25 0 0 0 .25.25h3.5a.25.25 0 0 0 .25-.25v-4.5a1 1 0 0 0-1-1Zm6-3.5a1 1 0 0 0-1 1v8a.25.25 0 0 0 .25.25h3.5a.25.25 0 0 0 .25-.25v-8a1 1 0 0 0-1-1Zm5.25 9.25h3.5a.25.25 0 0 0 .25-.25v-12a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v12a.25.25 0 0 0 .25.25M18.07 4.21l.31.46A.74.74 0 0 0 19 5a.74.74 0 0 0 .62-.38l2-3.5a.75.75 0 0 0 0-.79a.72.72 0 0 0-.71-.33l-4 .5a.75.75 0 0 0-.53 1.16l.3.46a.24.24 0 0 1-.07.34L2.45 11.92a1 1 0 0 0-.28 1.39a1 1 0 0 0 .83.44a.94.94 0 0 0 .55-.17l14.17-9.44a.25.25 0 0 1 .35.07M1 24h22a1 1 0 0 0 .31-1.95A1 1 0 0 0 23 22H1a1 1 0 0 0-.31.05A1 1 0 0 0 1 24"/>
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold mb-3">Performance Reports</h2>
+      <p class="text-base leading-relaxed">Generate insights and reports to track overall work efficiency.</p>
+    </div>
+
+  </div>
+</div>
+
+
+
+
+
+
+<section id="faq" class="w-full md:px-20 mx-auto py-16 px-6 md:mt-20 mt-2">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
+
+    <div>
+      <h1 class="text-4xl md:text-6xl  text-white mb-4 uppercase">Frequently Asked Questions</h1>
+      <p class="text-gray-300">
+        Have questions about how our Work Monitoring System works?  
+        Here are some common queries to help you understand better.
+      </p>
+    </div>
+
+    <div class="space-y-4">
+      <div class="border border-gray-600 rounded-lg">
+        <button onclick="toggleFAQ(1)" class="w-full text-left p-4 font-semibold flex justify-between items-center text-white">
+          How does the Work Monitoring System track employee activity?
+          <span id="icon-1">+</span>
+        </button>
+        <div id="answer-1" class="hidden p-4 text-gray-300">
+          The system monitors tasks, log-in/log-out times, and generates detailed productivity reports automatically.
+        </div>
+      </div>
+
+      <div class="border border-gray-600 rounded-lg">
+        <button onclick="toggleFAQ(2)" class="w-full text-left p-4 font-semibold flex justify-between items-center text-white">
+          Can managers generate performance reports?
+          <span id="icon-2">+</span>
+        </button>
+        <div id="answer-2" class="hidden p-4 text-gray-300">
+          Yes, managers can generate weekly, monthly, or custom reports to evaluate individual and team performance.
+        </div>
+      </div>
+
+      <div class="border border-gray-600 rounded-lg">
+        <button onclick="toggleFAQ(3)" class="w-full text-left p-4 font-semibold flex justify-between items-center text-white">
+          Is the system secure for storing employee data?
+          <span id="icon-3">+</span>
+        </button>
+        <div id="answer-3" class="hidden p-4 text-gray-300">
+          Absolutely. All data is encrypted and stored securely with role-based access controls.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<footer class="bg-gray-900 text-white py-12 mt-20">
+  <div class="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between space-y-6 md:space-y-0">
+    
+    <div class="flex flex-col items-center md:items-start">
+      <img src="{% static 'images/logo.png' %}" alt="Logo" class="h-14 w-14 mb-4">
+      <p class="text-center md:text-left text-lg max-w-md">
+        Empowering productivity with smart work monitoring solutions.
+      </p>
+    </div>
+
+ <div class="flex space-x-6">
+  <a href="https://www.facebook.com" target="_blank" class="hover:scale-110 transition">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+      <path fill="#fff" d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95"/>
+    </svg>
+  </a>
+
+  <a href="https://www.instagram.com" target="_blank" class="hover:scale-110 transition">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+      <path fill="#fff" d="M12.001 9a3 3 0 1 0 0 6a3 3 0 0 0 0-6m0-2a5 5 0 1 1 0 10a5 5 0 0 1 0-10m6.5-.25a1.25 1.25 0 0 1-2.5 0a1.25 1.25 0 0 1 2.5 0M12.001 4c-2.474 0-2.878.007-4.029.058c-.784.037-1.31.142-1.798.332a2.9 2.9 0 0 0-1.08.703a2.9 2.9 0 0 0-.704 1.08c-.19.49-.295 1.015-.331 1.798C4.007 9.075 4 9.461 4 12c0 2.475.007 2.878.058 4.029c.037.783.142 1.31.331 1.797c.17.435.37.748.702 1.08c.337.336.65.537 1.08.703c.494.191 1.02.297 1.8.333C9.075 19.994 9.461 20 12 20c2.475 0 2.878-.007 4.029-.058c.782-.037 1.308-.142 1.797-.331a2.9 2.9 0 0 0 1.08-.703c.337-.336.538-.649.704-1.08c.19-.492.296-1.018.332-1.8c.052-1.103.058-1.49.058-4.028c0-2.474-.007-2.878-.058-4.029c-.037-.782-.143-1.31-.332-1.798a2.9 2.9 0 0 0-.703-1.08a2.9 2.9 0 0 0-1.08-.704c-.49-.19-1.016-.295-1.798-.331C14.926 4.006 14.54 4 12 4m0-2c2.717 0 3.056.01 4.123.06c1.064.05 1.79.217 2.427.465c.66.254 1.216.598 1.772 1.153a4.9 4.9 0 0 1 1.153 1.772c.247.637.415 1.363.465 2.428c.047 1.066.06 1.405.06 4.122s-.01 3.056-.06 4.122s-.218 1.79-.465 2.428a4.9 4.9 0 0 1-1.153 1.772a4.9 4.9 0 0 1-1.772 1.153c-.637.247-1.363.415-2.427.465c-1.067.047-1.406.06-4.123.06s-3.056-.01-4.123-.06c-1.064-.05-1.789-.218-2.427-.465a4.9 4.9 0 0 1-1.772-1.153a4.9 4.9 0 0 1-1.153-1.772c-.248-.637-.415-1.363-.465-2.428C2.012 15.056 2 14.717 2 12s.01-3.056.06-4.122s.217-1.79.465-2.428a4.9 4.9 0 0 1 1.153-1.772A4.9 4.9 0 0 1 5.45 2.525c.637-.248 1.362-.415 2.427-.465C8.945 2.013 9.284 2 12.001 2"/>
+    </svg>
+  </a>
+
+  <a href="https://www.linkedin.com" target="_blank" class="hover:scale-110 transition">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+      <path fill="#fff" d="M20.47 2H3.53a1.45 1.45 0 0 0-1.47 1.43v17.14A1.45 1.45 0 0 0 3.53 22h16.94a1.45 1.45 0 0 0 1.47-1.43V3.43A1.45 1.45 0 0 0 20.47 2M8.09 18.74h-3v-9h3ZM6.59 8.48a1.56 1.56 0 1 1 0-3.12a1.57 1.57 0 1 1 0 3.12m12.32 10.26h-3v-4.83c0-1.21-.43-2-1.52-2A1.65 1.65 0 0 0 12.85 13a2 2 0 0 0-.1.73v5h-3v-9h3V11a3 3 0 0 1 2.71-1.5c2 0 3.45 1.29 3.45 4.06Z"/>
+    </svg>
+  </a>
+
+  <a href="https://twitter.com" target="_blank" class="hover:scale-110 transition">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+      <path fill="#fff" d="m17.687 3.063l-4.996 5.711l-4.32-5.711H2.112l7.477 9.776l-7.086 8.099h3.034l5.469-6.25l4.78 6.25h6.102l-7.794-10.304l6.625-7.571zm-1.064 16.06L5.654 4.782h1.803l10.846 14.34z"/>
+    </svg>
+  </a>
+</div>
+
+  </div>
+
+  <div class="border-t border-gray-700 mt-8 pt-6 text-center text-sm text-gray-400">
+    © 2025 Work Monitoring System. All Rights Reserved.
+  </div>
+</footer>
+
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+
+
+
+
+
+  <script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>
+
