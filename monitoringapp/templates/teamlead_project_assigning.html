@@ -1,0 +1,338 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Lead Reports - Cybexel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+<style>
+/* Dropdown box (collapsed state) */
+select {
+    color: white;                 /* selected text */
+    background-color: #000;       /* black background */
+    border: 1px solid #444;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    appearance: none;             /* remove default arrow in some browsers */
+}
+
+/* Dropdown options */
+select option {
+    color: white;                 /* text color in list */
+    background-color: #000;       /* black background */
+}
+
+/* Prevent any hover/focus/selected color changes */
+select:hover,
+select:focus,
+select option:hover,
+select option:focus,
+select option:checked {
+    color: white !important;
+    background-color: #000 !important;
+    cursor: pointer;
+}
+
+/* Optional: remove outline for a cleaner look */
+select:focus {
+    outline: none;
+    box-shadow: none;
+}
+</style>
+
+
+
+</head>
+<body class="bg-black text-white font-sans select-none">
+
+<div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#250f1e] text-white p-6 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+  <div class="flex items-center justify-between mb-6">
+    <div class="w-full flex justify-center select-none">
+      <img src="{% static 'images/logo.png' %}" alt="Logo" class="w-32 h-32 object-contain">
+    </div>
+    <button class="menu-toggle md:hidden text-white text-2xl max-md:mt-[-9rem]">&times;</button>
+  </div>
+  <nav class="select-none">
+    <ul class="space-y-8 text-sm">
+      <li>
+        <a href="{% url 'teamlead_dashboard' %}" class="block py-2 px-4 rounded hover:bg-white hover:text-[#151a37]">
+          Team Lead Dashboard
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'teamlead_reports' %}" class="block py-2 px-4 rounded hover:bg-white hover:text-[#151a37]">
+          Reports
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'teamlead_project_assigning' %}" class="block py-2 px-4 rounded bg-white text-[#151a37]">
+          Project Assigning
+        </a>
+      </li>
+    </ul>
+  </nav>
+</div>
+
+<button class="menu-toggle md:hidden fixed top-8 left-4 z-50 text-white p-2 rounded shadow-lg">
+  &#9776;
+</button>
+
+
+
+<div class="ml-0 md:ml-64 p-4 md:p-6">
+  <h1 class="text-2xl font-bold mb-6">Assign Project</h1>
+
+  <form method="POST" enctype="multipart/form-data" class="space-y-4 bg-transparent border-2 border-[#250f1e] text-white p-6 rounded-lg shadow">
+    {% csrf_token %}
+
+    <!-- Auto-filled team name (readonly) -->
+    <div>
+      <label class="block font-medium">Team</label>
+      <input type="text" value="{{ team_lead.team.name }}" readonly class="w-full border rounded p-2 bg-gray-100">
+    </div>
+
+    <!-- Department dropdown -->
+    <div>
+  <label class="block font-medium">Department</label>
+  <select name="department" required class="w-full border rounded p-2 text-black">
+    {% for dept in departments %}
+      <option value="{{ dept.id }}" class="text-black">{{ dept.name }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+
+  <div>
+  <label class="block font-medium">Assign To</label>
+  <select name="assign_to" required class="w-full border rounded p-2 ">
+    {% if team_members %}
+      {% for member in team_members %}
+        <option value="{{ member.id }}">{{ member.name }}</option>
+      {% endfor %}
+    {% else %}
+      <option disabled>No team members found</option>
+    {% endif %}
+  </select>
+</div>
+
+
+    <div>
+      <label class="block font-medium">Work Name</label>
+      <input type="text" name="work_name" required class="w-full border rounded p-2">
+    </div>
+
+    <div>
+      <label class="block font-medium">Work Type</label>
+      <select name="work_type" required class="w-full border rounded p-2">
+        <option value="Client">Client</option>
+        <option value="Company">Company</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block font-medium">Category (Optional)</label>
+      <input type="text" name="category" class="w-full border rounded p-2">
+    </div>
+
+    <div>
+      <label class="block font-medium">Description</label>
+      <textarea name="description" rows="3" class="w-full border rounded p-2"></textarea>
+    </div>
+
+    <div>
+      <label class="block font-medium">Deadline</label>
+      <input type="date" name="deadline" required class="w-full border rounded p-2">
+    </div>
+
+    <div>
+      <label class="block font-medium">Additional Notes</label>
+      <textarea name="additional_notes" rows="2" class="w-full border rounded p-2"></textarea>
+    </div>
+
+    <div>
+      <label class="block font-medium">Upload File</label>
+      <input type="file" name="upload_file" class="w-full border rounded p-2">
+    </div>
+
+    <div>
+      <label class="block font-medium">Upload Image</label>
+      <input type="file" name="upload_image" accept="image/*" class="w-full border rounded p-2">
+    </div>
+
+    <div>
+      <label class="block font-medium">Color Preference</label>
+      <input type="text" name="color_preference" class="w-full border rounded p-2">
+    </div>
+
+    <div>
+      <label class="block font-medium">Content Example</label>
+      <textarea name="content_example" rows="2" class="w-full border rounded p-2"></textarea>
+    </div>
+
+    <div>
+      <label class="block font-medium">Priority</label>
+      <select name="priority" class="w-full border rounded p-2">
+        <option value="Low">Low</option>
+        <option value="Medium" selected>Medium</option>
+        <option value="High">High</option>
+        <option value="Urgent">Urgent</option>
+      </select>
+    </div>
+
+    <button type="submit" class="bg-[#250f1e] text-white px-4 py-2 rounded hover:bg-green-700">
+      Assign Project
+    </button>
+  </form>
+</div>
+
+
+<div class="md:ml-64 px-10">
+
+  <h2 class="text-xl font-bold text-white mt-8 mb-4">Assigned Projects</h2>
+  <div class="overflow-x-auto">
+    <table class="min-w-full border border-gray-700 text-white">
+      <thead>
+        <tr class="bg-[#250f1e]">
+          <th class="px-4 py-2 border">Team</th>
+          <th class="px-4 py-2 border">Department</th>
+          <th class="px-4 py-2 border">Project Name</th>
+          <th class="px-4 py-2 border">Assigned To</th>
+          <th class="px-4 py-2 border">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for project in projects %}
+        <tr class="bg-[#250f1e]/30">
+          <td class="px-4 py-2 border">{{ project.team.name }}</td>
+          <td class="px-4 py-2 border">{{ project.department.name }}</td>
+          <td class="px-4 py-2 border">{{ project.work_name }}</td>
+          <td class="px-4 py-2 border">{{ project.assign_to.name }}</td>
+          <td class="px-4 py-2 border space-x-2">
+            <button onclick="document.getElementById('editModal{{ project.id }}').classList.remove('hidden')" class="px-2 py-1 bg-blue-600 rounded hover:bg-blue-700">Edit</button>
+            <a href="{% url 'project_assign_delete' project.id %}" class="px-2 py-1 bg-red-600 rounded hover:bg-red-700" onclick="return confirm('Are you sure?')">Delete</a>
+          </td>
+        </tr>
+
+        <div id="editModal{{ project.id }}" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div class="bg-[#250f1e] p-6 rounded-lg w-11/12 md:w-2/3 relative max-h-[90vh] overflow-y-auto">
+            
+            <button onclick="document.getElementById('editModal{{ project.id }}').classList.add('hidden')" class="absolute top-2 right-2 text-white font-bold text-xl">&times;</button>
+
+            <h2 class="text-xl font-bold text-white mb-4">Edit Project</h2>
+
+            <form method="POST" enctype="multipart/form-data" action="{% url 'project_assign_edit' project.id %}" class="space-y-4">
+              {% csrf_token %}
+
+              <div>
+                <label class="text-white">Team</label>
+                <input type="text" value="{{ project.team.name }}" readonly class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">
+              </div>
+
+              <div>
+                <label class="text-white">Department</label>
+                <select name="department" class="w-full p-2 rounded border border-gray-600 bg-black text-white">
+                  {% for dept in departments %}
+                    <option value="{{ dept.id }}" {% if project.department.id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div>
+                <label class="text-white">Assign To</label>
+                <select name="assign_to" class="w-full p-2 rounded border border-gray-600 bg-black text-white">
+                  {% for member in team_members %}
+                    <option value="{{ member.id }}" {% if project.assign_to.id == member.id %}selected{% endif %}>{{ member.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div>
+                <label class="text-white">Work Name</label>
+                <input type="text" name="work_name" value="{{ project.work_name }}" class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">
+              </div>
+
+              <div>
+                <label class="text-white">Work Type</label>
+                <select name="work_type" class="w-full p-2 rounded border border-gray-600 bg-black text-white">
+                  <option value="Client" {% if project.work_type == "Client" %}selected{% endif %}>Client</option>
+                  <option value="Company" {% if project.work_type == "Company" %}selected{% endif %}>Company</option>
+                  <option value="Other" {% if project.work_type == "Other" %}selected{% endif %}>Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="text-white">Category</label>
+                <input type="text" name="category" value="{{ project.category }}" class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">
+              </div>
+
+              <div>
+                <label class="text-white">Description</label>
+                <textarea name="description" rows="3" class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">{{ project.description }}</textarea>
+              </div>
+
+              <div>
+                <label class="text-white">Deadline</label>
+                <input type="date" name="deadline" value="{{ project.deadline }}" class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">
+              </div>
+
+              <div>
+                <label class="text-white">Additional Notes</label>
+                <textarea name="additional_notes" rows="2" class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">{{ project.additional_notes }}</textarea>
+              </div>
+
+              <div>
+                <label class="text-white">Upload File</label>
+                <input type="file" name="upload_file" class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">
+              </div>
+
+              <div>
+                <label class="text-white">Upload Image</label>
+                <input type="file" name="upload_image" accept="image/*" class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">
+              </div>
+
+              <div>
+                <label class="text-white">Color Preference</label>
+                <input type="text" name="color_preference" value="{{ project.color_preference }}" class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">
+              </div>
+
+              <div>
+                <label class="text-white">Content Example</label>
+                <textarea name="content_example" rows="2" class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">{{ project.content_example }}</textarea>
+              </div>
+
+              <div>
+                <label class="text-white">Priority</label>
+                <select name="priority" class="w-full p-2 rounded border border-gray-600 bg-black text-white">
+                  <option value="Low" {% if project.priority == "Low" %}selected{% endif %}>Low</option>
+                  <option value="Medium" {% if project.priority == "Medium" %}selected{% endif %}>Medium</option>
+                  <option value="High" {% if project.priority == "High" %}selected{% endif %}>High</option>
+                  <option value="Urgent" {% if project.priority == "Urgent" %}selected{% endif %}>Urgent</option>
+                </select>
+              </div>
+
+              <button type="submit" class="bg-black mt-4 px-4 py-2 rounded hover:bg-green-700">Update Project</button>
+            </form>
+          </div>
+        </div>
+
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+
+
+
+
+
+
+
+<script src="{% static 'js/admin.js' %}"></script>
+
+</body>
+</html>

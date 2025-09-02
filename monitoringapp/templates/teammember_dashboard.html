@@ -1,4 +1,6 @@
 {% load static %}
+{% load tz %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -35,49 +37,58 @@
 
 <div class="ml-0 md:ml-64 p-6 mt-20">
 
-<div class="bg-transparent p-6 rounded-2xl shadow mb-6">
-  <h2 class="text-xl font-bold mb-4 text-white">Announcements</h2>
+  <!-- Announcements -->
+  <div class="bg-transparent p-6 rounded-2xl shadow mb-6">
+    <h2 class="text-xl font-bold mb-4 text-white">Announcements</h2>
 
-  {% if announcements %}
-    {% for ann in announcements %}
-      <div class="w-full p-3 rounded-lg border-2 border-[#250f1e] bg-transparent text-white mb-4">
-        <p class="font-semibold">{{ ann.title }}</p>
-        <p>{{ ann.message }}</p>
-        <p class="text-xs text-gray-400">Posted at: {{ ann.created_at|date:"M d, H:i" }}</p>
-      </div>
-    {% endfor %}
-  {% else %}
-    <p class="text-gray-400">No announcements in the last 12 hours.</p>
-  {% endif %}
-</div>
+    {% if announcements %}
+      {% for ann in announcements %}
+        <div class="w-full p-3 rounded-lg border-2 border-[#250f1e] bg-transparent text-white mb-4">
+          <p class="font-semibold">{{ ann.title }}</p>
+          <p>{{ ann.message }}</p>
+          <p class="text-xs text-gray-400">
+            Posted at: {{ ann.created_at|localtime|date:"M d, Y h:i A"}}
+          </p>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="text-gray-400">No announcements in the last 12 hours.</p>
+    {% endif %}
+  </div>
 
-  <!-- Reports Section -->
-  <div class="grid md:grid-cols-2 gap-6">
-    
   <!-- Morning Report -->
-  <div class="border-2 border-[#250f1e] text-white p-6 rounded-2xl shadow">
-    <h2 class="text-lg font-bold mb-4">Morning Report</h2>
-    <textarea class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#250f1e]" 
-              rows="5" placeholder="Enter morning report..."></textarea>
-    <button class="mt-4 bg-[#250f1e] text-white px-6 py-2 rounded-lg shadow hover:bg-[#3a1731] transition">
-      Post
-    </button>
+  <div class="bg-[#250f1e]/40 p-6 rounded-2xl shadow mb-6">
+    <h2 class="text-lg font-semibold mb-3 text-white">Submit Morning Report</h2>
+    <form method="POST" class="space-y-3">
+      {% csrf_token %}
+      <textarea name="morning_report" rows="4"
+        class="w-full p-3 rounded-lg bg-black border border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-600"
+        placeholder="Write your morning report..."></textarea>
+      <button type="submit" name="morning_submit"
+        class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-semibold">
+        Submit Morning Report
+      </button>
+    </form>
   </div>
 
   <!-- Evening Report -->
-  <div class="border-2 border-[#250f1e] text-white p-6 rounded-2xl shadow">
-    <h2 class="text-lg font-bold mb-4">Evening Report</h2>
-    <textarea class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#250f1e]" 
-              rows="5" placeholder="Enter evening report..."></textarea>
-    <button class="mt-4 bg-[#250f1e] text-white px-6 py-2 rounded-lg shadow hover:bg-[#3a1731] transition">
-      Post
-    </button>
+  <div class="bg-[#250f1e]/40 p-6 rounded-2xl shadow mb-6">
+    <h2 class="text-lg font-semibold mb-3 text-white">Submit Evening Report</h2>
+    <form method="POST" class="space-y-3">
+      {% csrf_token %}
+      <textarea name="evening_report" rows="4"
+        class="w-full p-3 rounded-lg bg-black border border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-600"
+        placeholder="Write your evening report..."></textarea>
+      <button type="submit" name="evening_submit"
+        class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-semibold">
+        Submit Evening Report
+      </button>
+    </form>
   </div>
 
 </div>
 
 
-</div>
 </body>
 
 </html>

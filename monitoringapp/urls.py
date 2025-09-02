@@ -11,13 +11,20 @@ urlpatterns = [
 
     path('admin_usermanagement',views.admin_usermanagement,name='admin_usermanagement'),
     path('delete/<int:id>/', views.delete_user, name='delete_user'),
-      path('edit_user/', views.edit_user, name='edit_user'),
+    path('edit-user/', views.edit_user, name='edit_user'),
+
 
 
 
 
     path('login/', views.login_view, name='login'),
     path('teamlead/dashboard/', views.teamlead_dashboard, name='teamlead_dashboard'),
+    path('teamlead_reports', views.teamlead_reports, name='teamlead_reports'),
+    path('teamlead_project_assigning', views.teamlead_project_assigning, name='teamlead_project_assigning'),
+    path('projects/edit/<int:pk>/', views.project_assign_edit, name='project_assign_edit'),
+    path('projects/delete/<int:pk>/', views.project_assign_delete, name='project_assign_delete'),
+
+
     path('teammember/dashboard/', views.teammember_dashboard, name='teammember_dashboard'),
 
 

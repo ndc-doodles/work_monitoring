@@ -4,6 +4,17 @@ from django.contrib import messages
 from django.contrib.auth.models import User  
 from .models import *
 from datetime import datetime
+from django.views.decorators.csrf import csrf_exempt
+from datetime import date
+import openpyxl
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import Alignment
+
+
+
+
+
 
 def index(request):
     return render(request,'index.html')
@@ -55,6 +66,7 @@ def delete_team(request, pk):
     return redirect('admin_dashboard')
 
 
+@csrf_exempt
 
 def admin_usermanagement(request):
     users = User.objects.all()
@@ -66,8 +78,8 @@ def admin_usermanagement(request):
         employee_id = request.POST.get("employee_id")
         email = request.POST.get("email")
         phone = request.POST.get("phone")
-        department = request.POST.get("department")
-        team = request.POST.get("team")
+        department_name = request.POST.get("department")
+        team_name = request.POST.get("team")
         job_Position = request.POST.get("job_Position")
         designation = request.POST.get("designation")
         work_location = request.POST.get("work_location")
@@ -80,13 +92,16 @@ def admin_usermanagement(request):
             messages.error(request, "⚠️ Username already exists. Please choose another one.")
             return redirect("admin_usermanagement")
 
+        department = get_object_or_404(Department, name=department_name) if department_name else None
+        team = get_object_or_404(Team, name=team_name) if team_name else None
+
         User.objects.create(
             name=name,
             employee_id=employee_id,
             email=email,
             phone=phone,
-            department=department,
-            team=team,
+            department=department,  
+            team=team,             
             job_Position=job_Position,
             designation=designation,
             work_location=work_location,
@@ -104,14 +119,12 @@ def admin_usermanagement(request):
         "teams": teams,
     }
     return render(request, "admin_usermanagement.html", context)
-    
 
 
 def delete_user(request, id):
     user = get_object_or_404(User, id=id)
     user.delete()
     return redirect('admin_usermanagement') 
-
 
 def edit_user(request):
     if request.method == "POST":
@@ -122,37 +135,54 @@ def edit_user(request):
         user.name = request.POST.get("edit_name")
         user.email = request.POST.get("edit_email")
         user.phone = request.POST.get("edit_phone")
-        user.department = request.POST.get("edit_department")
-        user.team = request.POST.get("edit_team")
-        user.job_Position = request.POST.get("edit_job_position")
 
+        # Department + Team (FKs)
+        department_name = request.POST.get("edit_department")
+        team_name = request.POST.get("edit_team")
+
+        if department_name:
+            try:
+                user.department = Department.objects.get(name=department_name)
+            except Department.DoesNotExist:
+                user.department = None
+
+        if team_name:
+            try:
+                user.team = Team.objects.get(name=team_name)
+            except Team.DoesNotExist:
+                user.team = None
+
+        user.job_Position = request.POST.get("edit_job_position")
         user.designation = request.POST.get("edit_designation")
         user.work_location = request.POST.get("edit_work_location")
         user.username = request.POST.get("edit_username")
         user.status = request.POST.get("edit_status")
 
-        # Handle joining_date safely
+        # Password
+        password = request.POST.get("edit_password")
+        if password:
+            user.set_password(password)
+
+        # Joining Date
         joining_date = request.POST.get("edit_joining_date")
-        if joining_date:  # if not empty
+        if joining_date:
             try:
                 user.joining_date = datetime.strptime(joining_date, "%Y-%m-%d").date()
             except ValueError:
-                messages.error(request, "Invalid date format! Please use YYYY-MM-DD.")
+                messages.error(request, "Invalid date format! Use YYYY-MM-DD.")
                 return redirect("admin_usermanagement")
         else:
-            user.joining_date = None  # allow empty date
+            user.joining_date = None
 
+        # Profile Image
         if request.FILES.get("edit_profile_upload"):
-            user.profile_image = request.FILES.get("edit_profile_upload")
+            user.profile_image = request.FILES["edit_profile_upload"]
 
         user.save()
         messages.success(request, "User updated successfully!")
-        return redirect('admin_usermanagement')
+        return redirect("admin_usermanagement")
 
-    return redirect('admin_usermanagement')
-
-
-
+    return redirect("admin_usermanagement")
 
 
 
@@ -199,15 +229,13 @@ def teamlead_dashboard(request):
             )
         return redirect('teamlead_dashboard')
 
-    # ✅ Get all team members EXCEPT the logged-in team lead
-    team_members = User.objects.filter(team=team_name).exclude(id=team_lead.id)
+    team_members = User.objects.filter(team=team_lead.team)
 
-    # ✅ Count team members only (not including team lead)
+
     total_users = team_members.count()
     active_members = team_members.filter(status="active").count()
     inactive_members = team_members.filter(status="inactive").count()
 
-    # ✅ Show announcements from last 12 hrs
     cutoff = timezone.now() - timedelta(hours=12)
     announcements = Announcement.objects.filter(
         created_by=team_lead,
@@ -224,17 +252,192 @@ def teamlead_dashboard(request):
 
 
 def teammember_dashboard(request):
-    # Get the logged-in team member
     team_member = User.objects.get(id=request.session['user_id'])
     team_name = team_member.team  
 
-    # ✅ Show announcements from the team lead of this team, last 12 hrs only
+    # Announcements (last 12 hours)
     cutoff = timezone.now() - timedelta(hours=12)
     announcements = Announcement.objects.filter(
-        created_by__team=team_name,   # announcements by team lead of this team
+        created_by__team=team_name,   
         created_at__gte=cutoff
     ).order_by('-created_at')
+
+    # Handle POST (Morning / Evening Report)
+    if request.method == "POST":
+        if 'morning_submit' in request.POST:
+            report_text = request.POST.get("morning_report")
+            if report_text:
+                MorningReport.objects.create(
+                    user=team_member,
+                    department=team_member.department.name if team_member.department else None,
+                    team=team_member.team.name if team_member.team else None,
+                    report_text=report_text
+                )
+                return redirect('teammember_dashboard')
+
+        elif 'evening_submit' in request.POST:
+            report_text = request.POST.get("evening_report")
+            if report_text:
+                EveningReport.objects.create(
+                    user=team_member,
+                    department=team_member.department.name if team_member.department else None,
+                    team=team_member.team.name if team_member.team else None,
+                    report_text=report_text
+                )
+                return redirect('teammember_dashboard')
 
     return render(request, 'teammember_dashboard.html', {
         'announcements': announcements
     })
+
+def teamlead_reports(request):
+    team_lead = get_object_or_404(User, id=request.session['user_id'])
+    team_name = team_lead.team
+    show_all = request.GET.get('all') == '1'
+
+    if show_all:
+        morning_reports = MorningReport.objects.filter(team=team_name).order_by('-created_at')
+        evening_reports = EveningReport.objects.filter(team=team_name).order_by('-created_at')
+    else:
+        today = date.today()
+        morning_reports = MorningReport.objects.filter(team=team_name, created_at__date=today)
+        evening_reports = EveningReport.objects.filter(team=team_name, created_at__date=today)
+
+    if 'export' in request.GET:
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Team Reports"
+
+        # Set headers
+        headers = ["Date", "Time", "Report Type", "Name", "Team", "Department", "Report"]
+        ws.append(headers)
+
+        # Function to add reports to Excel
+        def add_reports(report_list, report_type):
+            for report in report_list:
+                local_time = timezone.localtime(report.created_at)  # convert UTC → local
+                ws.append([
+                    local_time.strftime("%Y-%m-%d"),
+                    local_time.strftime("%I:%M %p"),
+                    report_type,
+                    report.user.name,
+                    report.team,
+                    report.department,
+                    report.report_text
+                ])
+
+        # Add Morning Reports
+        add_reports(morning_reports, "Morning")
+
+        # Add Evening Reports
+        add_reports(evening_reports, "Evening")
+
+        # Apply text wrap to 'Report' column
+        for row in ws.iter_rows(min_row=2, min_col=7, max_col=7):
+            for cell in row:
+                cell.alignment = Alignment(wrap_text=True, vertical='top')
+
+        # Adjust column widths for readability
+        column_widths = [15, 12, 12, 20, 15, 20, 50]
+        for i, width in enumerate(column_widths, start=1):
+            ws.column_dimensions[ws.cell(row=1, column=i).column_letter].width = width
+
+        # Return as Excel file
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename="team_reports.xlsx"'
+        wb.save(response)
+        return response
+
+    return render(request, 'teamlead_reports.html', {
+        'morning_reports': morning_reports,
+        'evening_reports': evening_reports,
+        'show_all': show_all
+    })
+
+
+def teamlead_project_assigning(request):
+    team_lead = get_object_or_404(User, id=request.session["user_id"])
+    departments = Department.objects.all()
+
+    # Team members for the dropdown
+    team_members = User.objects.filter(
+        team=team_lead.team,
+        job_Position__iexact='Team Member'
+    ).exclude(id=team_lead.id)
+
+    # Handle form submission (create new project)
+    if request.method == "POST":
+        ProjectAssign.objects.create(
+            team=team_lead.team,
+            department_id=request.POST.get("department"),
+            assign_to_id=request.POST.get("assign_to"),
+            assigned_by=team_lead,
+            work_name=request.POST.get("work_name"),
+            work_type=request.POST.get("work_type"),
+            category=request.POST.get("category"),
+            description=request.POST.get("description"),
+            deadline=request.POST.get("deadline"),
+            additional_notes=request.POST.get("additional_notes"),
+            upload_file=request.FILES.get("upload_file"),
+            upload_image=request.FILES.get("upload_image"),
+            color_preference=request.POST.get("color_preference"),
+            content_example=request.POST.get("content_example"),
+            priority=request.POST.get("priority"),
+        )
+        return redirect("teamlead_project_assigning")
+
+    # Fetch all projects assigned by this team lead (or in their team)
+    projects = ProjectAssign.objects.filter(team=team_lead.team)
+
+    return render(request, "teamlead_project_assigning.html", {
+        "departments": departments,
+        "team_lead": team_lead,
+        "team_members": team_members,
+        "projects": projects,  # pass projects to display in table
+    })
+def project_assign_edit(request, pk):
+    project = get_object_or_404(ProjectAssign, id=pk)
+    departments = Department.objects.all()
+    team_members = User.objects.filter(
+        team=project.team, job_Position__iexact='Team Member'
+    ).exclude(id=project.assigned_by.id)
+
+    if request.method == "POST":
+        project.department_id = request.POST.get("department")
+        project.assign_to_id = request.POST.get("assign_to")
+        project.work_name = request.POST.get("work_name")
+        project.work_type = request.POST.get("work_type")
+        project.category = request.POST.get("category")
+        project.description = request.POST.get("description")
+
+        # ✅ Handle deadline properly
+        deadline = request.POST.get("deadline")
+        project.deadline = deadline if deadline else None
+
+        project.additional_notes = request.POST.get("additional_notes")
+
+        if request.FILES.get("upload_file"):
+            project.upload_file = request.FILES.get("upload_file")
+        if request.FILES.get("upload_image"):
+            project.upload_image = request.FILES.get("upload_image")
+
+        project.color_preference = request.POST.get("color_preference")
+        project.content_example = request.POST.get("content_example")
+        project.priority = request.POST.get("priority")
+
+        project.save()
+        return redirect("teamlead_project_assigning")
+
+    return render(request, "teamlead_project_assigning.html", {
+        "project": project,
+        "departments": departments,
+        "team_members": team_members,
+    })
+
+
+def project_assign_delete(request, pk):
+    project = get_object_or_404(ProjectAssign, id=pk)
+    project.delete()
+    return redirect("teamlead_project_assigning")

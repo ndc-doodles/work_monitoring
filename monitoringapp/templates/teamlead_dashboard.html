@@ -1,4 +1,6 @@
 {% load static %}
+{% load tz %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,11 +19,21 @@
     </div>
     <button class="menu-toggle md:hidden text-white text-2xl max-md:mt-[-9rem]">&times;</button>
   </div>
-  <nav class="select-none">
+  <nav class="select-none"> 
     <ul class="space-y-8 text-sm">
       <li>
         <a href="{% url 'teamlead_dashboard' %}" class="block py-2 px-4 rounded bg-white text-[#151a37]">
           Team Lead Dashboard
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'teamlead_reports' %}" class="block py-2 px-4 rounded hover:bg-white hover:text-[#151a37]">
+          Reports
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'teamlead_project_assigning' %}" class="block py-2 px-4 rounded hover:bg-white hover:text-[#151a37]">
+          Project Assigning
         </a>
       </li>
     </ul>
@@ -56,7 +68,11 @@
       {% for announcement in announcements %}
         <div class="p-3 bg-gray-50/10 border rounded">
           <p class="text-gray-200">{{ announcement.message }}</p>
-          <span class="text-xs text-gray-200">Posted on {{ announcement.created_at }}</span>
+
+<span class="text-xs text-gray-200">
+    Posted on {{ announcement.created_at|localtime|date:"M d, Y h:i A" }}
+</span>
+
         </div>
       {% empty %}
         <p class="text-gray-100">No announcements yet.</p>
@@ -79,25 +95,33 @@
           <th class="border p-2 text-left">Name</th>
           <th class="border p-2 text-left">Email</th>
           <th class="border p-2 text-left">Role</th>
+          <th class="border p-2 text-left">Job Position</th>
           <th class="border p-2 text-left">Status</th>
         </tr>
       </thead>
       <tbody>
-        {% for member in team_members %}
-        <tr>
-          <td class="border p-2">{{ member.name }}</td>
-          <td class="border p-2">{{ member.email }}</td>
-          <td class="border p-2">{{ member.job_Position }}</td>
-          <td class="border p-2">
-            {% if member.status == "active" %}
-              <span class="text-green-600 font-semibold">Active</span>
-            {% else %}
-              <span class="text-red-500 font-semibold">Inactive</span>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
+  {% for member in team_members %}
+  <tr>
+    <td class="border p-2">{{ member.name }}</td>
+    <td class="border p-2">{{ member.email }}</td>
+    <td class="border p-2">{{ member.designation }}</td> 
+    <td class="border p-2">{{ member.job_Position }}</td>   
+  
+    <td class="border p-2">
+      {% if member.status == "active" %}
+        <span class="text-green-600 font-semibold">Active</span>
+      {% else %}
+        <span class="text-red-500 font-semibold">Inactive</span>
+      {% endif %}
+    </td>
+  </tr>
+  {% empty %}
+  <tr>
+    <td colspan="4" class="text-center text-gray-500">No team members found</td>
+  </tr>
+  {% endfor %}
+</tbody>
+
     </table>
   </div>
 

@@ -1,6 +1,7 @@
 from django.db import models
 from datetime import timedelta
 from django.utils import timezone
+from django.utils.timezone import now
 
 
 
@@ -15,7 +16,8 @@ class Team(models.Model):
     
 
     def __str__(self):
-        return f"{self.name} ({self.department_name})"
+       return self.name
+
 
 
 
@@ -65,6 +67,71 @@ class Announcement(models.Model):
     def __str__(self):
         return self.title
 
-    # Check if still valid (within 12 hours)
     def is_valid(self):
         return self.created_at >= timezone.now() - timedelta(hours=12)
+
+
+
+class MorningReport(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    department = models.CharField(max_length=150)
+    team = models.CharField(max_length=150)
+    report_text = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"Morning Report - {self.user.username} ({self.created_at.date()})"
+
+
+class EveningReport(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    department = models.CharField(max_length=150)
+    team = models.CharField(max_length=150)
+    report_text = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"Evening Report - {self.user.username} ({self.created_at.date()})"
+    
+
+
+class ProjectAssign(models.Model):
+    WORK_TYPE_CHOICES = (
+        ("Client", "Client"),
+        ("Company", "Company"),
+        ("Other", "Other"),
+    )
+    PRIORITY_CHOICES = (
+        ("Low", "Low"),
+        ("Medium", "Medium"),
+        ("High", "High"),
+        ("Urgent", "Urgent"),
+    )
+
+    team = models.ForeignKey("Team", on_delete=models.CASCADE)  # auto-filled
+    department = models.ForeignKey("Department", on_delete=models.CASCADE)  # dropdown
+    assign_to = models.ForeignKey(
+        "User", related_name="assigned_works", on_delete=models.CASCADE
+    )  # only same team members
+    assigned_by = models.ForeignKey(
+        "User", related_name="given_works", on_delete=models.CASCADE
+    )  # the logged-in team lead
+    
+    work_name = models.CharField(max_length=255)
+    work_type = models.CharField(max_length=50, choices=WORK_TYPE_CHOICES)
+    category = models.CharField(max_length=255, blank=True, null=True)  # optional
+    description = models.TextField(blank=True, null=True)
+    deadline = models.DateField(null=True, blank=True)
+    additional_notes = models.TextField(blank=True, null=True)
+
+    upload_file = models.FileField(upload_to="uploads/files/", blank=True, null=True)
+    upload_image = models.ImageField(upload_to="uploads/images/", blank=True, null=True)
+
+    color_preference = models.CharField(max_length=100, blank=True, null=True)
+    content_example = models.TextField(blank=True, null=True)
+
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="Medium")
+    assigned_date = models.DateField(default=now)
+
+    def __str__(self):
+        return f"{self.work_name} → {self.assign_to.name}"
