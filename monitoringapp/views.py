@@ -74,6 +74,7 @@ def admin_usermanagement(request):
     teams = Team.objects.all()
 
     if request.method == "POST":
+        user_id = request.POST.get("id")  # for edit, will be None for new users
         name = request.POST.get("name")
         employee_id = request.POST.get("employee_id")
         email = request.POST.get("email")
@@ -88,29 +89,65 @@ def admin_usermanagement(request):
         status = request.POST.get("status")
         image = request.FILES.get("profile_image")
 
-        if User.objects.filter(username=username).exists():
-            messages.error(request, "⚠️ Username already exists. Please choose another one.")
-            return redirect("admin_usermanagement")
-
         department = get_object_or_404(Department, name=department_name) if department_name else None
         team = get_object_or_404(Team, name=team_name) if team_name else None
 
-        User.objects.create(
-            name=name,
-            employee_id=employee_id,
-            email=email,
-            phone=phone,
-            department=department,  
-            team=team,             
-            job_Position=job_Position,
-            designation=designation,
-            work_location=work_location,
-            username=username,
-            password=password,
-            status=status,
-            profile_image=image
-        )
-        messages.success(request, "✅ User created successfully!")
+        if user_id:  # Edit existing user
+            user = get_object_or_404(User, id=user_id)
+
+            # Check uniqueness for employee_id and username, excluding current user
+            if User.objects.filter(employee_id=employee_id).exclude(id=user.id).exists():
+                messages.error(request, "⚠️ Employee ID already exists for another user.")
+                return redirect("admin_usermanagement")
+
+            if User.objects.filter(username=username).exclude(id=user.id).exists():
+                messages.error(request, "⚠️ Username already exists for another user.")
+                return redirect("admin_usermanagement")
+
+            # Update user
+            user.name = name
+            user.employee_id = employee_id
+            user.email = email
+            user.phone = phone
+            user.department = department
+            user.team = team
+            user.job_Position = job_Position
+            user.designation = designation
+            user.work_location = work_location
+            user.username = username
+            user.password = password
+            user.status = status
+            if image:
+                user.profile_image = image
+            user.save()
+            messages.success(request, "✅ User updated successfully!")
+        
+        else:  # Create new user
+            if User.objects.filter(employee_id=employee_id).exists():
+                messages.error(request, "⚠️ Employee ID already exists. Please choose another one.")
+                return redirect("admin_usermanagement")
+
+            if User.objects.filter(username=username).exists():
+                messages.error(request, "⚠️ Username already exists. Please choose another one.")
+                return redirect("admin_usermanagement")
+
+            User.objects.create(
+                name=name,
+                employee_id=employee_id,
+                email=email,
+                phone=phone,
+                department=department,  
+                team=team,             
+                job_Position=job_Position,
+                designation=designation,
+                work_location=work_location,
+                username=username,
+                password=password,
+                status=status,
+                profile_image=image
+            )
+            messages.success(request, "✅ User created successfully!")
+
         return redirect("admin_usermanagement")
 
     context = {
@@ -119,7 +156,6 @@ def admin_usermanagement(request):
         "teams": teams,
     }
     return render(request, "admin_usermanagement.html", context)
-
 
 def delete_user(request, id):
     user = get_object_or_404(User, id=id)
@@ -361,13 +397,13 @@ def teamlead_project_assigning(request):
     team_lead = get_object_or_404(User, id=request.session["user_id"])
     departments = Department.objects.all()
 
-    # Team members for the dropdown
+    # Fetch all users in same team, who are team members
+    # Use __icontains instead of __iexact to avoid case mismatch
     team_members = User.objects.filter(
         team=team_lead.team,
-        job_Position__iexact='Team Member'
+        job_Position__icontains='team member'
     ).exclude(id=team_lead.id)
 
-    # Handle form submission (create new project)
     if request.method == "POST":
         ProjectAssign.objects.create(
             team=team_lead.team,
@@ -388,15 +424,16 @@ def teamlead_project_assigning(request):
         )
         return redirect("teamlead_project_assigning")
 
-    # Fetch all projects assigned by this team lead (or in their team)
     projects = ProjectAssign.objects.filter(team=team_lead.team)
 
     return render(request, "teamlead_project_assigning.html", {
         "departments": departments,
         "team_lead": team_lead,
         "team_members": team_members,
-        "projects": projects,  # pass projects to display in table
+        "projects": projects,
     })
+
+
 def project_assign_edit(request, pk):
     project = get_object_or_404(ProjectAssign, id=pk)
     departments = Department.objects.all()
@@ -441,3 +478,9 @@ def project_assign_delete(request, pk):
     project = get_object_or_404(ProjectAssign, id=pk)
     project.delete()
     return redirect("teamlead_project_assigning")
+
+
+def teammember_project(request):
+    user = get_object_or_404(User, id=request.session["user_id"])
+    projects = ProjectAssign.objects.filter(assign_to=user).order_by("-assigned_date")
+    return render(request, "teammember_project.html", {"projects": projects})

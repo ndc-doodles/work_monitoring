@@ -12,6 +12,7 @@ urlpatterns = [
     path('admin_usermanagement',views.admin_usermanagement,name='admin_usermanagement'),
     path('delete/<int:id>/', views.delete_user, name='delete_user'),
     path('edit-user/', views.edit_user, name='edit_user'),
+    path('teammember_project/', views.teammember_project, name='teammember_project'),
 
 
 

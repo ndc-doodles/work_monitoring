@@ -1,47 +1,60 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const header = document.getElementById("mainHeader");
-  const menuToggle = document.getElementById("menuToggle");
-  const menuSidebar = document.getElementById("menuSidebar");
-  const closeMenu = document.getElementById("closeMenu");
 
-  // Scroll effect
-  window.addEventListener("scroll", () => {
-    if (window.scrollY > 50) {
-      header.classList.add("bg-black/30", "backdrop-blur-md", "shadow-md");
-    } else {
-      header.classList.remove("bg-black/30", "backdrop-blur-md", "shadow-md");
-    }
-  });
 
-  // Sidebar toggle
-  menuToggle.addEventListener("click", () => {
-    menuSidebar.classList.remove("translate-x-full");
-    menuSidebar.classList.add("translate-x-0");
-  });
 
-  closeMenu.addEventListener("click", () => {
-    menuSidebar.classList.add("translate-x-full");
-    menuSidebar.classList.remove("translate-x-0");
-  });
 
-  // Close sidebar when clicking outside
-  document.addEventListener("click", (e) => {
-    if (!menuSidebar.contains(e.target) && !menuToggle.contains(e.target)) {
-      menuSidebar.classList.add("translate-x-full");
-      menuSidebar.classList.remove("translate-x-0");
-    }
+  document.addEventListener("DOMContentLoaded", () => {
+  const buttons = document.querySelectorAll(".menu-toggle"); 
+  const sidebar = document.getElementById("sidebar");
+
+  buttons.forEach(button => {
+    button.addEventListener("click", () => {
+      sidebar.classList.toggle("-translate-x-full");
+    });
   });
 });
 
 
 
-function openDescriptionModal(description) {
-    document.getElementById('descriptionContent').innerText = description;
-    document.getElementById('descriptionModal').classList.remove('hidden');
-    document.getElementById('descriptionModal').classList.add('flex');
-  }
+function openProjectModal(projectId) {
+  const modal = document.getElementById('assignProjectModal');
+  const projectData = document.getElementById(`project-data-${projectId}`);
+  if (!projectData) return;
 
-  function closeDescriptionModal() {
-    document.getElementById('descriptionModal').classList.add('hidden');
-    document.getElementById('descriptionModal').classList.remove('flex');
-  }
+  // Populate text inputs and textareas
+  const fields = projectData.querySelectorAll('input, textarea');
+  fields.forEach(field => {
+    const name = field.getAttribute('name');
+    const modalField = modal.querySelector(`[name="${name}"]`);
+    if (modalField) {
+      if (modalField.tagName.toLowerCase() === 'textarea') {
+        modalField.textContent = field.value || '';
+      } else {
+        modalField.value = field.value || '';
+      }
+    }
+  });
+
+  // Populate selects
+  const selectNames = ['work_type','priority'];
+  selectNames.forEach(name => {
+    const hiddenField = projectData.querySelector(`[name="${name}"]`);
+    const modalSelect = modal.querySelector(`[name="${name}"]`);
+    if (hiddenField && modalSelect) {
+      const optionExists = Array.from(modalSelect.options).some(o => o.value == hiddenField.value);
+      if(optionExists) modalSelect.value = hiddenField.value;
+    }
+  });
+
+  // File/Image previews
+  const fileUrl = projectData.querySelector('[name="upload_file"]')?.value;
+  const imageUrl = projectData.querySelector('[name="upload_image"]')?.value;
+
+  const fileLink = modal.querySelector('#existing-file-link');
+  const imagePreview = modal.querySelector('#existing-image-preview');
+
+  if (fileLink) fileLink.href = fileUrl || '#';
+  if (imagePreview) imagePreview.src = imageUrl || '';
+
+  // Show modal
+  modal.classList.remove('hidden');
+}
