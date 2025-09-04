@@ -24,6 +24,8 @@ urlpatterns = [
     path('teamlead_project_assigning', views.teamlead_project_assigning, name='teamlead_project_assigning'),
     path('projects/edit/<int:pk>/', views.project_assign_edit, name='project_assign_edit'),
     path('projects/delete/<int:pk>/', views.project_assign_delete, name='project_assign_delete'),
+    path('teamlead_notepad/', views.teamlead_notepad, name='teamlead_notepad'),
+    path('teammember_notepad/', views.teammember_notepad, name='teammember_notepad'),
 
 
     path('teammember/dashboard/', views.teammember_dashboard, name='teammember_dashboard'),

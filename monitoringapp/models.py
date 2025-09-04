@@ -135,3 +135,17 @@ class ProjectAssign(models.Model):
 
     def __str__(self):
         return f"{self.work_name} → {self.assign_to.name}"
+    
+
+
+
+
+class Notepad(models.Model):
+    user = models.ForeignKey("User", on_delete=models.CASCADE)  # multiple notes per user
+    title = models.CharField(max_length=255, default="Untitled")
+    content = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.user.name})"

@@ -10,6 +10,10 @@ import openpyxl
 from django.http import HttpResponse
 from openpyxl import Workbook
 from openpyxl.styles import Alignment
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+
+
 
 
 
@@ -484,3 +488,83 @@ def teammember_project(request):
     user = get_object_or_404(User, id=request.session["user_id"])
     projects = ProjectAssign.objects.filter(assign_to=user).order_by("-assigned_date")
     return render(request, "teammember_project.html", {"projects": projects})
+
+@login_required
+def teamlead_notepad(request):
+    user = get_object_or_404(User, id=request.session.get("user_id"))
+
+    # All notes for this user
+    all_notes = Notepad.objects.filter(user=user).order_by("-updated_at")
+
+    # Pagination (4 notes per page)
+    paginator = Paginator(all_notes, 4)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    # Note to edit/view
+    note_id = request.GET.get("note_id")
+    note = None
+    if note_id:
+        try:
+            note = Notepad.objects.get(id=note_id, user=user)
+        except Notepad.DoesNotExist:
+            note = None  # If invalid ID, open new note
+
+    if request.method == "POST":
+        note_id_post = request.POST.get("note_id")
+        title = request.POST.get("title") or "Untitled"
+        content = request.POST.get("content")
+
+        if note_id_post:
+            # Update existing note
+            note = get_object_or_404(Notepad, id=note_id_post, user=user)
+            note.title = title
+            note.content = content
+            note.save()
+        else:
+            # Create new note
+            note = Notepad.objects.create(user=user, title=title, content=content)
+
+        return redirect(f"{request.path}?note_id={note.id}")
+
+    return render(request, "teamlead_notepad.html", {"note": note, "page_obj": page_obj})
+
+@login_required
+def teammember_notepad(request):
+    user = get_object_or_404(User, id=request.session.get("user_id"))
+
+    # All notes for this user
+    all_notes = Notepad.objects.filter(user=user).order_by("-updated_at")
+
+    # Pagination (4 notes per page)
+    paginator = Paginator(all_notes, 4)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    # Note to edit/view
+    note_id = request.GET.get("note_id")
+    note = None
+    if note_id:
+        try:
+            note = Notepad.objects.get(id=note_id, user=user)
+        except Notepad.DoesNotExist:
+            note = None  # If invalid ID, open new note
+
+    if request.method == "POST":
+        note_id_post = request.POST.get("note_id")
+        title = request.POST.get("title") or "Untitled"
+        content = request.POST.get("content")
+
+        if note_id_post:
+            # Update existing note
+            note = get_object_or_404(Notepad, id=note_id_post, user=user)
+            note.title = title
+            note.content = content
+            note.save()
+        else:
+            # Create new note
+            note = Notepad.objects.create(user=user, title=title, content=content)
+
+        return redirect(f"{request.path}?note_id={note.id}")
+
+    return render(request, "teammember_notepad.html", {"note": note, "page_obj": page_obj})
