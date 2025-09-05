@@ -2,6 +2,8 @@ from django.db import models
 from datetime import timedelta
 from django.utils import timezone
 from django.utils.timezone import now
+from django.conf import settings
+
 
 
 
@@ -149,3 +151,16 @@ class Notepad(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.user.name})"
+
+
+class Knowledge(models.Model):
+    department = models.ForeignKey("Department", on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)   # ✅ use your custom User
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    file = models.FileField(upload_to="knowledge_files/", blank=True, null=True, max_length=500)
+    link = models.URLField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title

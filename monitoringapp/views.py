@@ -568,3 +568,74 @@ def teammember_notepad(request):
         return redirect(f"{request.path}?note_id={note.id}")
 
     return render(request, "teammember_notepad.html", {"note": note, "page_obj": page_obj})
+
+
+
+@login_required
+def teamlead_repository(request):
+    user = get_object_or_404(User, id=request.session.get("user_id"))
+
+    if request.method == "POST":
+        title = request.POST.get("title")
+        description = request.POST.get("description")
+        link = request.POST.get("link")
+        file = request.FILES.get("file")
+
+        Knowledge.objects.create(
+            department=user.department,
+            user=user,
+            title=title,
+            description=description,
+            link=link,
+            file=file
+        )
+        return redirect("teamlead_repository")
+
+    knowledge_items = Knowledge.objects.filter(department=user.department).order_by("-created_at")
+
+    return render(request, "teamlead_repository.html", {"knowledge_items": knowledge_items})
+
+@login_required
+def teamlead_repository_delete(request, pk):
+    user = get_object_or_404(User, id=request.session.get("user_id"))
+    resource = get_object_or_404(Knowledge, id=pk, department=user.department)
+
+    if request.method == "POST":
+        resource.delete()
+        return redirect("teamlead_repository")
+
+
+@login_required
+def teammember_repository(request):
+    user = get_object_or_404(User, id=request.session.get("user_id"))
+
+    if request.method == "POST":
+        title = request.POST.get("title")
+        description = request.POST.get("description")
+        link = request.POST.get("link")
+        file = request.FILES.get("file")
+
+        Knowledge.objects.create(
+            department=user.department,
+            user=user,
+            title=title,
+            description=description,
+            link=link,
+            file=file
+        )
+        return redirect("teammember_repository")
+
+    knowledge_items = Knowledge.objects.filter(department=user.department).order_by("-created_at")
+
+    return render(request, "teammember_repository.html", {"knowledge_items": knowledge_items})
+
+
+
+@login_required
+def teammember_repository_delete(request, pk):
+    user = get_object_or_404(User, id=request.session.get("user_id"))
+    resource = get_object_or_404(Knowledge, id=pk, department=user.department)
+
+    if request.method == "POST":
+        resource.delete()
+        return redirect("teammember_repository")

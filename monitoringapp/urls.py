@@ -29,6 +29,14 @@ urlpatterns = [
 
 
     path('teammember/dashboard/', views.teammember_dashboard, name='teammember_dashboard'),
+    path("teamlead_repository/", views.teamlead_repository, name="teamlead_repository"),
+    path('teamlead_repository/delete/<int:pk>/', views.teamlead_repository_delete, name='teamlead_repository_delete'),
+
+    path("teammember_repository/", views.teammember_repository, name="teammember_repository"),
+    path('teammember_repository/delete/<int:pk>/', views.teammember_repository_delete, name='teammember_repository_delete'),
+
+
+
 
 
 
