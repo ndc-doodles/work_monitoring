@@ -1,0 +1,161 @@
+{% load static %}
+{% load tz %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Lead Dashboard - Cybexel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+</head>
+<body class="bg-black text-white font-sans select-none">
+
+<div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-[#250f1e] text-white p-6 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+  <div class="flex items-center justify-between mb-6">
+    <div class="w-full flex justify-center select-none">
+      <img src="{% static 'images/logo.png' %}" alt="Logo" class="w-32 h-32 object-contain">
+    </div>
+    <button class="menu-toggle md:hidden text-white text-2xl max-md:mt-[-9rem]">&times;</button>
+  </div>
+  <nav class="select-none"> 
+    <ul class="space-y-8 text-sm">
+      <li>
+        <a href="{% url 'teamlead_dashboard' %}" class="block py-2 px-4 rounded bg-white text-[#151a37]">
+          Team Lead Dashboard
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'teamlead_reports' %}" class="block py-2 px-4 rounded hover:bg-white hover:text-[#151a37]">
+          Reports
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'teamlead_project_assigning' %}" class="block py-2 px-4 rounded hover:bg-white hover:text-[#151a37]">
+          Project Assigning
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'teamlead_notepad' %}" class="block py-2 px-4 rounded hover:bg-white hover:text-black">Notepad</a>
+      </li>
+      <li>
+        <a href="{% url 'teamlead_repository' %}" class="block py-2 px-4 rounded hover:bg-white hover:text-black">Knowledge Repository</a>
+      </li>
+      <li>
+        <a href="{% url 'teamlead_profile' %}" class="block py-2 px-4 rounded hover:bg-white hover:text-black">Profile</a>
+      </li>
+    </ul>
+  </nav>
+</div>
+
+<button class="menu-toggle md:hidden fixed top-8 left-4 z-50 text-white p-2 rounded shadow-lg">
+  &#9776;
+</button>
+
+
+
+
+
+
+
+
+<div class="ml-0 md:ml-64 p-6">
+  <h1 class="text-3xl font-bold mb-6">My Profile</h1>
+
+  <!-- Profile Display -->
+  <div class="bg-[#250f1e]/70 rounded-2xl p-6 shadow-lg flex flex-col md:flex-row gap-6 items-center">
+    <div class="flex-shrink-0">
+      {% if user.profile_image %}
+        <img src="{{ user.profile_image.url }}" class="w-32 h-32 rounded-full object-cover border-4 border-purple-600">
+      {% else %}
+        <img src="{% static 'images/default-user.png' %}" class="w-32 h-32 rounded-full object-cover border-4 border-purple-600">
+      {% endif %}
+    </div>
+    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <p><span class="font-semibold">Full Name:</span> {{ user.name }}</p>
+      <p><span class="font-semibold">Employee ID:</span> {{ user.employee_id }}</p>
+      <p><span class="font-semibold">Email:</span> {{ user.email }}</p>
+      <p><span class="font-semibold">Phone:</span> {{ user.phone }}</p>
+      <p><span class="font-semibold">Department:</span> {{ user.department.name }}</p>
+      <p><span class="font-semibold">Team:</span> {{ user.team.name }}</p>
+      <p><span class="font-semibold">Job Position:</span> {{ user.job_Position }}</p>
+      <p><span class="font-semibold">Designation:</span> {{ user.designation }}</p>
+      <p><span class="font-semibold">Work Location:</span> {{ user.work_location }}</p>
+      <p><span class="font-semibold">Joining Date:</span> {{ user.joining_date }}</p>
+      <p><span class="font-semibold">Username:</span> {{ user.username }}</p>
+    </div>
+  </div>
+
+  <!-- Edit Profile -->
+  <div class="mt-8 bg-[#250f1e]/70 rounded-2xl p-6 shadow-lg">
+    <h2 class="text-xl font-semibold mb-4">Edit Profile</h2>
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="edit_profile">
+
+      <div>
+        <label class="block mb-1">Full Name</label>
+        <input type="text" name="name" value="{{ user.name }}" class="w-full p-2 rounded bg-black border border-gray-600 text-white">
+      </div>
+      <div>
+        <label class="block mb-1">Email</label>
+        <input type="email" name="email" value="{{ user.email }}" class="w-full p-2 rounded bg-black border border-gray-600 text-white">
+      </div>
+      <div>
+        <label class="block mb-1">Phone</label>
+        <input type="text" name="phone" value="{{ user.phone }}" class="w-full p-2 rounded bg-black border border-gray-600 text-white">
+      </div>
+      
+      <div>
+        <label class="block mb-1">Profile Image</label>
+        <input type="file" name="profile_image" class="w-full text-white">
+      </div>
+
+      <button type="submit" class="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700">Save Changes</button>
+    </form>
+  </div>
+
+  <div class="mt-8 bg-[#250f1e]/70 rounded-2xl p-6 shadow-lg">
+    <h2 class="text-xl font-semibold mb-4">Change Password</h2>
+    <form method="POST" class="space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="change_password">
+
+      <div>
+        <label class="block mb-1">Current Password</label>
+        <input type="password" name="current_password" class="w-full p-2 rounded bg-black border border-gray-600 text-white" required>
+      </div>
+      <div>
+        <label class="block mb-1">New Password</label>
+        <input type="password" name="new_password" class="w-full p-2 rounded bg-black border border-gray-600 text-white" required>
+      </div>
+      <div>
+        <label class="block mb-1">Confirm New Password</label>
+        <input type="password" name="confirm_password" class="w-full p-2 rounded bg-black border border-gray-600 text-white" required>
+      </div>
+      <button type="submit" class="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700">Update Password</button>
+    </form>
+  </div>
+
+  {% if messages %}
+    <ul class="mt-4">
+      {% for message in messages %}
+        <li class="text-{{ message.tags }}-400">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+
+
+
+
+
+
+
+
+
+<script src="{% static 'js/admin.js' %}"></script>
+
+</body>
+</html>

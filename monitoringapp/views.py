@@ -12,6 +12,8 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.contrib.auth.hashers import check_password, make_password
+
 
 
 
@@ -639,3 +641,81 @@ def teammember_repository_delete(request, pk):
     if request.method == "POST":
         resource.delete()
         return redirect("teammember_repository")
+
+
+
+def teamlead_profile(request):
+    user = get_object_or_404(User, id=request.session.get("user_id"))
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        # ✅ Change Password
+        if action == "change_password":
+            current_password = request.POST.get("current_password")
+            new_password = request.POST.get("new_password")
+            confirm_password = request.POST.get("confirm_password")
+
+            if not check_password(current_password, user.password):
+                messages.error(request, "Current password is incorrect.")
+            elif new_password != confirm_password:
+                messages.error(request, "New password and confirmation do not match.")
+            else:
+                user.password = make_password(new_password)
+                user.save()
+                messages.success(request, "Password changed successfully!")
+
+        # ✅ Edit Profile
+        elif action == "edit_profile":
+            user.name = request.POST.get("name")
+            user.email = request.POST.get("email")
+            user.phone = request.POST.get("phone")
+            user.work_location = request.POST.get("work_location")
+
+            if "profile_image" in request.FILES:
+                user.profile_image = request.FILES["profile_image"]
+
+            user.save()
+            messages.success(request, "Profile updated successfully!")
+
+        return redirect("teamlead_profile")
+
+    return render(request, "teamlead_profile.html", {"user": user})
+
+def teammember_profile(request):
+    user = get_object_or_404(User, id=request.session.get("user_id"))
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        # ✅ Change Password
+        if action == "change_password":
+            current_password = request.POST.get("current_password")
+            new_password = request.POST.get("new_password")
+            confirm_password = request.POST.get("confirm_password")
+
+            if not check_password(current_password, user.password):
+                messages.error(request, "Current password is incorrect.")
+            elif new_password != confirm_password:
+                messages.error(request, "New password and confirmation do not match.")
+            else:
+                user.password = make_password(new_password)
+                user.save()
+                messages.success(request, "Password changed successfully!")
+
+        # ✅ Edit Profile
+        elif action == "edit_profile":
+            user.name = request.POST.get("name")
+            user.email = request.POST.get("email")
+            user.phone = request.POST.get("phone")
+            user.work_location = request.POST.get("work_location")
+
+            if "profile_image" in request.FILES:
+                user.profile_image = request.FILES["profile_image"]
+
+            user.save()
+            messages.success(request, "Profile updated successfully!")
+
+        return redirect("teammember_profile")
+
+    return render(request, "teammember_profile.html", {"user": user})
