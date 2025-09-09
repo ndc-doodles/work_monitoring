@@ -13,6 +13,8 @@ from openpyxl.styles import Alignment
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.contrib.auth.hashers import check_password, make_password
+import random
+from django.core.mail import send_mail
 
 
 
@@ -200,10 +202,10 @@ def edit_user(request):
         user.username = request.POST.get("edit_username")
         user.status = request.POST.get("edit_status")
 
-        # Password
+        # 🔐 Handle password (hash it!)
         password = request.POST.get("edit_password")
         if password:
-            user.set_password(password)
+            user.password = make_password(password)
 
         # Joining Date
         joining_date = request.POST.get("edit_joining_date")
@@ -225,8 +227,6 @@ def edit_user(request):
         return redirect("admin_usermanagement")
 
     return redirect("admin_usermanagement")
-
-
 
 
 def login_view(request):
@@ -254,6 +254,78 @@ def login_view(request):
             messages.error(request, "Invalid username or password")
 
     return render(request, 'user_login.html')
+
+
+
+
+def forgot_password(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+
+        try:
+            user = User.objects.get(email=email)
+            otp = random.randint(100000, 999999)
+            request.session['reset_email'] = email
+            request.session['reset_otp'] = str(otp)
+
+            # Send OTP via email
+            send_mail(
+                "Password Reset OTP",
+                f"Your OTP for password reset is {otp}",
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+
+            messages.success(request, "OTP sent to your email")
+            return redirect("verify_otp")
+
+        except User.DoesNotExist:
+            messages.error(request, "Email not registered")
+    
+    return render(request, "forgot_password.html")
+
+
+# Step 2: Verify OTP
+def verify_otp(request):
+    if request.method == "POST":
+        otp = request.POST.get("otp")
+        if otp == request.session.get("reset_otp"):
+            return redirect("reset_password")
+        else:
+            messages.error(request, "Invalid OTP")
+
+    return render(request, "verify_otp.html")
+
+
+# Step 3: Reset Password
+def reset_password(request):
+    if request.method == "POST":
+        password = request.POST.get("password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if password == confirm_password:
+            email = request.session.get("reset_email")
+            user = User.objects.get(email=email)
+            user.password = password   # ⚠️ Better: use user.set_password(password) if using Django's auth User
+            user.save()
+
+            # Clear session values
+            request.session.pop("reset_email", None)
+            request.session.pop("reset_otp", None)
+
+            messages.success(request, "Password reset successful. Please login.")
+            return redirect("login")
+        else:
+            messages.error(request, "Passwords do not match")
+
+    return render(request, "reset_password.html")
+
+
+
+
+
+
 
 
 def teamlead_dashboard(request):
