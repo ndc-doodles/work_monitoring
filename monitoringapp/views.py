@@ -15,6 +15,9 @@ from django.core.paginator import Paginator
 from django.contrib.auth.hashers import check_password, make_password
 import random
 from django.core.mail import send_mail
+from datetime import time, timedelta
+
+
 
 
 
@@ -364,51 +367,71 @@ def teamlead_dashboard(request):
         'announcements': announcements,
     })
 
+def is_within_time_range(start_time, end_time, now=None):
+    now = now or timezone.localtime().time()
+    return start_time <= now <= end_time
 
 def teammember_dashboard(request):
     team_member = User.objects.get(id=request.session['user_id'])
     team_name = team_member.team  
 
-    # Announcements (last 12 hours)
     cutoff = timezone.now() - timedelta(hours=12)
     announcements = Announcement.objects.filter(
         created_by__team=team_name,   
         created_at__gte=cutoff
     ).order_by('-created_at')
 
-    # Handle POST (Morning / Evening Report)
+    morning_start, morning_end = time(9, 30), time(10, 30)
+    evening_start, evening_end = time(17, 0), time(18, 15)
+
     if request.method == "POST":
+        now_time = timezone.localtime().time()
+
         if 'morning_submit' in request.POST:
-            report_text = request.POST.get("morning_report")
-            if report_text:
-                MorningReport.objects.create(
-                    user=team_member,
-                    department=team_member.department.name if team_member.department else None,
-                    team=team_member.team.name if team_member.team else None,
-                    report_text=report_text
-                )
-                return redirect('teammember_dashboard')
+            if is_within_time_range(morning_start, morning_end, now_time):
+                report_text = request.POST.get("morning_report")
+                status = request.POST.get("morning_status")
+                if report_text and status:
+                    MorningReport.objects.create(
+                        user=team_member,
+                        department=team_member.department.name if team_member.department else None,
+                        team=team_member.team.name if team_member.team else None,
+                        report_text=report_text,
+                        status=status
+                    )
+                    messages.success(request, "Morning report submitted successfully.")
+                    return redirect('teammember_dashboard')
+            else:
+                messages.error(request, "You can only submit morning reports between 9:30 and 10:30 AM.")
 
         elif 'evening_submit' in request.POST:
-            report_text = request.POST.get("evening_report")
-            if report_text:
-                EveningReport.objects.create(
-                    user=team_member,
-                    department=team_member.department.name if team_member.department else None,
-                    team=team_member.team.name if team_member.team else None,
-                    report_text=report_text
-                )
-                return redirect('teammember_dashboard')
+            if is_within_time_range(evening_start, evening_end, now_time):
+                report_text = request.POST.get("evening_report")
+                status = request.POST.get("evening_status")
+                if report_text and status:
+                    EveningReport.objects.create(
+                        user=team_member,
+                        department=team_member.department.name if team_member.department else None,
+                        team=team_member.team.name if team_member.team else None,
+                        report_text=report_text,
+                        status=status
+                    )
+                    messages.success(request, "Evening report submitted successfully.")
+                    return redirect('teammember_dashboard')
+            else:
+                messages.error(request, "You can only submit evening reports between 5:00 and 6:15 PM.")
 
     return render(request, 'teammember_dashboard.html', {
-        'announcements': announcements
+        'announcements': announcements,
+        'morning_allowed': is_within_time_range(morning_start, morning_end),
+        'evening_allowed': is_within_time_range(evening_start, evening_end),
     })
-
 def teamlead_reports(request):
     team_lead = get_object_or_404(User, id=request.session['user_id'])
     team_name = team_lead.team
     show_all = request.GET.get('all') == '1'
 
+    # Filter reports (today or all)
     if show_all:
         morning_reports = MorningReport.objects.filter(team=team_name).order_by('-created_at')
         evening_reports = EveningReport.objects.filter(team=team_name).order_by('-created_at')
@@ -417,33 +440,33 @@ def teamlead_reports(request):
         morning_reports = MorningReport.objects.filter(team=team_name, created_at__date=today)
         evening_reports = EveningReport.objects.filter(team=team_name, created_at__date=today)
 
+    # Handle Excel export
     if 'export' in request.GET:
         wb = Workbook()
         ws = wb.active
         ws.title = "Team Reports"
 
-        # Set headers
-        headers = ["Date", "Time", "Report Type", "Name", "Team", "Department", "Report"]
+        # Set headers (added Status column)
+        headers = ["Date", "Time", "Report Type", "Name", "Team", "Department", "Report", "Status"]
         ws.append(headers)
 
         # Function to add reports to Excel
         def add_reports(report_list, report_type):
             for report in report_list:
-                local_time = timezone.localtime(report.created_at)  # convert UTC → local
+                local_time = timezone.localtime(report.created_at)  # Convert UTC → Local
                 ws.append([
                     local_time.strftime("%Y-%m-%d"),
                     local_time.strftime("%I:%M %p"),
                     report_type,
-                    report.user.name,
+                    getattr(report.user, "name", report.user.username),  # Safe fallback
                     report.team,
                     report.department,
-                    report.report_text
+                    report.report_text,
+                    report.status
                 ])
 
-        # Add Morning Reports
+        # Add both Morning & Evening Reports
         add_reports(morning_reports, "Morning")
-
-        # Add Evening Reports
         add_reports(evening_reports, "Evening")
 
         # Apply text wrap to 'Report' column
@@ -452,11 +475,11 @@ def teamlead_reports(request):
                 cell.alignment = Alignment(wrap_text=True, vertical='top')
 
         # Adjust column widths for readability
-        column_widths = [15, 12, 12, 20, 15, 20, 50]
+        column_widths = [15, 12, 12, 20, 15, 20, 50, 15]
         for i, width in enumerate(column_widths, start=1):
             ws.column_dimensions[ws.cell(row=1, column=i).column_letter].width = width
 
-        # Return as Excel file
+        # Return Excel file as response
         response = HttpResponse(
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         )
@@ -469,8 +492,6 @@ def teamlead_reports(request):
         'evening_reports': evening_reports,
         'show_all': show_all
     })
-
-
 def teamlead_project_assigning(request):
     team_lead = get_object_or_404(User, id=request.session["user_id"])
     departments = Department.objects.all()
@@ -563,7 +584,6 @@ def teammember_project(request):
     projects = ProjectAssign.objects.filter(assign_to=user).order_by("-assigned_date")
     return render(request, "teammember_project.html", {"projects": projects})
 
-@login_required
 def teamlead_notepad(request):
     user = get_object_or_404(User, id=request.session.get("user_id"))
 
@@ -603,7 +623,6 @@ def teamlead_notepad(request):
 
     return render(request, "teamlead_notepad.html", {"note": note, "page_obj": page_obj})
 
-@login_required
 def teammember_notepad(request):
     user = get_object_or_404(User, id=request.session.get("user_id"))
 
@@ -645,7 +664,7 @@ def teammember_notepad(request):
 
 
 
-@login_required
+
 def teamlead_repository(request):
     user = get_object_or_404(User, id=request.session.get("user_id"))
 
@@ -669,7 +688,7 @@ def teamlead_repository(request):
 
     return render(request, "teamlead_repository.html", {"knowledge_items": knowledge_items})
 
-@login_required
+
 def teamlead_repository_delete(request, pk):
     user = get_object_or_404(User, id=request.session.get("user_id"))
     resource = get_object_or_404(Knowledge, id=pk, department=user.department)
@@ -679,7 +698,7 @@ def teamlead_repository_delete(request, pk):
         return redirect("teamlead_repository")
 
 
-@login_required
+
 def teammember_repository(request):
     user = get_object_or_404(User, id=request.session.get("user_id"))
 
@@ -791,3 +810,6 @@ def teammember_profile(request):
         return redirect("teammember_profile")
 
     return render(request, "teammember_profile.html", {"user": user})
+
+def teammember_task(request):
+    return render(request,'teammember_task.html')

@@ -72,28 +72,48 @@ class Announcement(models.Model):
     def is_valid(self):
         return self.created_at >= timezone.now() - timedelta(hours=12)
 
-
-
 class MorningReport(models.Model):
+    STATUS_CHOICES = [
+        ("Pending", "Pending"),
+        ("In Progress", "In Progress"),
+        ("Completed", "Completed"),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     department = models.CharField(max_length=150)
     team = models.CharField(max_length=150)
     report_text = models.TextField()
+    status = models.CharField(
+        max_length=50,
+        choices=STATUS_CHOICES,
+        default="Pending"
+    )
     created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"Morning Report - {self.user.username} ({self.created_at.date()})"
+        return f"Morning Report - {self.user.username} ({self.created_at.date()}) | {self.status}"
 
 
 class EveningReport(models.Model):
+    STATUS_CHOICES = [
+        ("Pending", "Pending"),
+        ("In Progress", "In Progress"),
+        ("Completed", "Completed"),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     department = models.CharField(max_length=150)
     team = models.CharField(max_length=150)
     report_text = models.TextField()
+    status = models.CharField(
+        max_length=50,
+        choices=STATUS_CHOICES,
+        default="Pending"
+    )
     created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"Evening Report - {self.user.username} ({self.created_at.date()})"
+        return f"Evening Report - {self.user.username} ({self.created_at.date()}) | {self.status}"
     
 
 

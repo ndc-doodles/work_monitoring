@@ -24,8 +24,7 @@ urlpatterns = [
     path('teamlead_project_assigning', views.teamlead_project_assigning, name='teamlead_project_assigning'),
     path('projects/edit/<int:pk>/', views.project_assign_edit, name='project_assign_edit'),
     path('projects/delete/<int:pk>/', views.project_assign_delete, name='project_assign_delete'),
-    path('teamlead_notepad/', views.teamlead_notepad, name='teamlead_notepad'),
-    path('teammember_notepad/', views.teammember_notepad, name='teammember_notepad'),
+    
 
 
     path('teammember/dashboard/', views.teammember_dashboard, name='teammember_dashboard'),
@@ -35,7 +34,10 @@ urlpatterns = [
 
     path("teammember_repository/", views.teammember_repository, name="teammember_repository"),
     path("teammember_profile/", views.teammember_profile, name="teammember_profile"),
+    path("teammember_task/", views.teammember_task, name="teammember_task"),
     path('teammember_repository/delete/<int:pk>/', views.teammember_repository_delete, name='teammember_repository_delete'),
+    path('teamlead_notepad/', views.teamlead_notepad, name='teamlead_notepad'),
+    path('teammember_notepad/', views.teammember_notepad, name='teammember_notepad'),
 
 
 

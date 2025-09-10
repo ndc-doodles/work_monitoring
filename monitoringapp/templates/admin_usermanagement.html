@@ -140,9 +140,14 @@ select:focus {
    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
   <div class="md:col-span-2">
     <label for="job_Position" class="block text-gray-700 font-medium mb-1">Job Position</label>
-    <input type="text" id="job_Position" name="job_Position"
-           class="w-full border border-gray-300 rounded-lg p-2 bg-transparent focus:ring-2 focus:ring-purple-600"
-           required>
+    <select id="job_Position" name="job_Position"
+        class="w-full border border-gray-300 rounded-lg p-2 bg-transparent focus:ring-2 focus:ring-purple-600"
+        required>
+  <option value="">-- Select Job Position --</option>
+  <option value="Team Lead">Team Lead</option>
+  <option value="Team Member">Team Member</option>
+</select>
+
   </div>
 
   <div>
