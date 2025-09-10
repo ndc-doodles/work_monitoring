@@ -58,7 +58,6 @@
 <div class="ml-0 md:ml-64 p-6">
   <h1 class="text-3xl font-bold mb-6">My Profile</h1>
 
-  <!-- Profile Info -->
   <div class="bg-[#250f1e]/70 rounded-2xl p-6 shadow-lg flex flex-col md:flex-row gap-6 items-center">
     <div class="flex-shrink-0">
       {% if user.profile_image %}
@@ -82,7 +81,6 @@
     </div>
   </div>
 
-  <!-- Edit Profile -->
   <div class="mt-8 bg-[#250f1e]/70 rounded-2xl p-6 shadow-lg">
     <h2 class="text-xl font-semibold mb-4">Edit Profile</h2>
     <form method="POST" enctype="multipart/form-data" class="space-y-4">
@@ -114,37 +112,7 @@
     </form>
   </div>
 
-  <!-- Change Password -->
-  <div class="mt-8 bg-[#250f1e]/70 rounded-2xl p-6 shadow-lg">
-    <h2 class="text-xl font-semibold mb-4">Change Password</h2>
-    <form method="POST" class="space-y-4">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="change_password">
-
-      <div>
-        <label class="block mb-1">Current Password</label>
-        <input type="password" name="current_password" class="w-full p-2 rounded bg-black border border-gray-600 text-white" required>
-      </div>
-      <div>
-        <label class="block mb-1">New Password</label>
-        <input type="password" name="new_password" class="w-full p-2 rounded bg-black border border-gray-600 text-white" required>
-      </div>
-      <div>
-        <label class="block mb-1">Confirm New Password</label>
-        <input type="password" name="confirm_password" class="w-full p-2 rounded bg-black border border-gray-600 text-white" required>
-      </div>
-      <button type="submit" class="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700">Update Password</button>
-    </form>
-  </div>
-
-  <!-- Messages -->
-  {% if messages %}
-    <ul class="mt-4">
-      {% for message in messages %}
-        <li class="text-{{ message.tags }}-400">{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
+  
 </div>
 
 
