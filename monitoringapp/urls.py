@@ -15,7 +15,8 @@ urlpatterns = [
     path('teammember_project/', views.teammember_project, name='teammember_project'),
 
 
-
+    path('teammember_task/update/<int:task_id>/', views.update_task, name='update_task'),
+    path('teammember_task/delete/<int:task_id>/', views.delete_task, name='delete_task'),
 
 
     path('login/', views.login_view, name='login'),
@@ -31,12 +32,18 @@ urlpatterns = [
     path("teamlead_repository/", views.teamlead_repository, name="teamlead_repository"),
     path('teamlead_repository/delete/<int:pk>/', views.teamlead_repository_delete, name='teamlead_repository_delete'),
     path('teamlead_profile/', views.teamlead_profile, name='teamlead_profile'),
+    path('teamlead_notepad/', views.teamlead_notepad, name='teamlead_notepad'),
+    path('teamlead_task/', views.teamlead_task, name='teamlead_task'),
+
+    # Update Task (status change)
+    path('teamlead_task/update/<int:task_id>/', views.update_task_teamlead, name='update_task_teamlead'),
+    path('teamlead_task/delete/<int:task_id>/', views.delete_task_teamlead, name='delete_task_teamlead'),
+
 
     path("teammember_repository/", views.teammember_repository, name="teammember_repository"),
     path("teammember_profile/", views.teammember_profile, name="teammember_profile"),
     path("teammember_task/", views.teammember_task, name="teammember_task"),
     path('teammember_repository/delete/<int:pk>/', views.teammember_repository_delete, name='teammember_repository_delete'),
-    path('teamlead_notepad/', views.teamlead_notepad, name='teamlead_notepad'),
     path('teammember_notepad/', views.teammember_notepad, name='teammember_notepad'),
 
 

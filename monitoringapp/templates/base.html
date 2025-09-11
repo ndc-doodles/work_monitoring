@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Monitoring System{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-white">
+
+  <!-- Page Content -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Toast Container (global alerts) -->
+  <div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+
+  <script>
+    // Reusable toast function
+    function showToast(message, type="warning") {
+      const colors = {
+        success: "bg-green-500",
+        warning: "bg-yellow-500",
+        error: "bg-red-500"
+      };
+
+      const toast = document.createElement("div");
+      toast.className = colors[type] + " text-black px-4 py-2 rounded shadow";
+      toast.innerText = message;
+
+      document.getElementById("toast-container").appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 4000); // disappear after 4s
+    }
+  </script>
+  
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

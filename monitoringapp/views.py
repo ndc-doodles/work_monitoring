@@ -812,4 +812,115 @@ def teammember_profile(request):
     return render(request, "teammember_profile.html", {"user": user})
 
 def teammember_task(request):
-    return render(request,'teammember_task.html')
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("login_view")  # redirect if no session found
+
+    user = User.objects.get(id=user_id)
+    tasks = Task.objects.filter(assigned_to=user)
+
+    if request.method == "POST":
+        title = request.POST.get("title")
+        description = request.POST.get("description")
+        Task.objects.create(
+            title=title,
+            description=description,
+            assigned_to=user
+        )
+        return redirect("teammember_task")
+
+    return render(request, "teammember_task.html", {"tasks": tasks})
+
+
+# TEAM MEMBER UPDATE TASK
+def update_task(request, task_id):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("login_view")
+
+    user = User.objects.get(id=user_id)
+    task = get_object_or_404(Task, id=task_id, assigned_to=user)
+
+    if request.method == "POST":
+        status = request.POST.get("status")
+        task.status = status
+        if status == "completed":
+            task.progress = 100
+        elif status == "in_progress":
+            task.progress = 50
+        else:
+            task.progress = 0
+        task.save()
+
+    return redirect("teammember_task")
+# TEAM MEMBER DELETE TASK
+def delete_task(request, task_id):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("login_view")
+
+    user = User.objects.get(id=user_id)
+    task = get_object_or_404(Task, id=task_id, assigned_to=user)
+
+    if request.method == "POST":
+        task.delete()
+
+    return redirect("teammember_task")
+
+
+# TEAM LEAD TASK VIEW (now similar to team member)
+def teamlead_task(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("login_view")  # redirect if no session found
+
+    user = User.objects.get(id=user_id)
+    tasks = Task.objects.filter(assigned_to=user)  # only show tasks for logged-in user
+
+    if request.method == "POST":
+        title = request.POST.get("title")
+        description = request.POST.get("description")
+        Task.objects.create(
+            title=title,
+            description=description,
+            assigned_to=user  # store with logged-in user's id
+        )
+        return redirect("teamlead_task")
+
+    return render(request, 'teamlead_task.html', {"tasks": tasks})
+
+
+# TEAM LEAD UPDATE TASK
+def update_task_teamlead(request, task_id):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("login_view")
+
+    user = User.objects.get(id=user_id)
+    task = get_object_or_404(Task, id=task_id, assigned_to=user)
+
+    if request.method == "POST":
+        status = request.POST.get("status")
+        task.status = status
+        if status == "completed":
+            task.progress = 100
+        elif status == "in_progress":
+            task.progress = 50
+        else:
+            task.progress = 0
+        task.save()
+
+    return redirect('teamlead_task')
+
+def delete_task_teamlead(request, task_id):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("login_view")
+
+    user = User.objects.get(id=user_id)
+    task = get_object_or_404(Task, id=task_id, assigned_to=user)
+
+    if request.method == "POST":
+        task.delete()
+
+    return redirect("teamlead_task")
