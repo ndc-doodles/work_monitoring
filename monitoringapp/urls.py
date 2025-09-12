@@ -54,8 +54,8 @@ urlpatterns = [
 
 
 
-
-
+    path("teamlead/logout/", views.teamlead_logout, name="teamlead_logout"),
+    path("teammember/logout/", views.teammember_logout, name="teammember_logout"),
 
 
 ]

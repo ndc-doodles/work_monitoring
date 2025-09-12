@@ -151,3 +151,11 @@ EMAIL_USE_SSL = False              # True if you switch to port 465
 EMAIL_HOST_USER = "info@cybexel.com"   # full email address
 EMAIL_HOST_PASSWORD = "Cybexelnme@1990"         # mailbox password
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+
+# Session expires after 1 day (86400 seconds)
+SESSION_COOKIE_AGE = 86400  
+
+# Optional: if True, session expires when browser is closed
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False

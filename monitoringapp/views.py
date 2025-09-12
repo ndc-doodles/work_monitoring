@@ -16,6 +16,9 @@ from django.contrib.auth.hashers import check_password, make_password
 import random
 from django.core.mail import send_mail
 from datetime import time, timedelta
+from django.utils.dateparse import parse_datetime
+from django.utils.timezone import localtime, make_aware, is_naive
+
 
 
 
@@ -230,8 +233,6 @@ def edit_user(request):
         return redirect("admin_usermanagement")
 
     return redirect("admin_usermanagement")
-
-
 def login_view(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -240,11 +241,15 @@ def login_view(request):
 
         try:
             user = User.objects.get(username=username)
-            
-            if user.password == password:
+
+            if user.password == password:  # ⚠️ insecure, use check_password later
                 db_position = user.job_Position.lower().replace(" ", "_")
                 if db_position == position:
+                    # ✅ Store session data
                     request.session['user_id'] = user.id
+                    request.session['position'] = position
+                    request.session['login_time'] = timezone.now().isoformat()  # save in ISO format
+
                     if position == "team_lead":
                         return redirect('teamlead_dashboard')
                     else:
@@ -257,6 +262,7 @@ def login_view(request):
             messages.error(request, "Invalid username or password")
 
     return render(request, 'user_login.html')
+
 
 
 
@@ -335,6 +341,17 @@ def teamlead_dashboard(request):
     team_lead = User.objects.get(id=request.session['user_id'])  
     team_name = team_lead.team  
 
+    # ✅ Fetch login time from session and convert back to datetime
+    login_time_str = request.session.get('login_time')
+    login_time = parse_datetime(login_time_str) if login_time_str else None
+
+    if login_time:
+        # If it's naive (no timezone info), make it aware
+        if is_naive(login_time):
+            login_time = make_aware(login_time)
+        # Convert to local timezone (Asia/Kolkata from settings.py)
+        login_time = localtime(login_time)
+
     if request.method == "POST":
         message = request.POST.get("message")
         if message.strip():
@@ -347,7 +364,6 @@ def teamlead_dashboard(request):
         return redirect('teamlead_dashboard')
 
     team_members = User.objects.filter(team=team_lead.team)
-
 
     total_users = team_members.count()
     active_members = team_members.filter(status="active").count()
@@ -365,6 +381,7 @@ def teamlead_dashboard(request):
         'inactive_members': inactive_members,
         'team_members': team_members,
         'announcements': announcements,
+        'login_time': login_time,  # ✅ IST datetime for template
     })
 
 def is_within_time_range(start_time, end_time, now=None):
@@ -374,6 +391,15 @@ def is_within_time_range(start_time, end_time, now=None):
 def teammember_dashboard(request):
     team_member = User.objects.get(id=request.session['user_id'])
     team_name = team_member.team  
+
+    # ✅ Fetch login time from session
+    login_time_str = request.session.get('login_time')
+    login_time = parse_datetime(login_time_str) if login_time_str else None
+
+    if login_time:
+        if is_naive(login_time):
+            login_time = make_aware(login_time)
+        login_time = localtime(login_time)  # ✅ converts to IST if TIME_ZONE = "Asia/Kolkata"
 
     cutoff = timezone.now() - timedelta(hours=12)
     announcements = Announcement.objects.filter(
@@ -425,7 +451,9 @@ def teammember_dashboard(request):
         'announcements': announcements,
         'morning_allowed': is_within_time_range(morning_start, morning_end),
         'evening_allowed': is_within_time_range(evening_start, evening_end),
+        'login_time': login_time,  # ✅ send to template
     })
+
 def teamlead_reports(request):
     team_lead = get_object_or_404(User, id=request.session['user_id'])
     team_name = team_lead.team
@@ -924,3 +952,17 @@ def delete_task_teamlead(request, task_id):
         task.delete()
 
     return redirect("teamlead_task")
+
+
+def teamlead_logout(request):
+    if 'user_id' in request.session:
+        request.session.flush()
+        messages.success(request, "Team Lead logged out successfully!")
+    return redirect('login')  # ✅ correct name
+
+
+def teammember_logout(request):
+    if 'user_id' in request.session:
+        request.session.flush()
+        messages.success(request, "Team Member logged out successfully!")
+    return redirect('login')  # ✅ correct name
