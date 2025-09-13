@@ -78,72 +78,55 @@
 <button class="menu-toggle md:hidden fixed top-8 left-4 z-50 text-white p-2 rounded shadow-lg">&#9776;</button>
 
 <!-- Main content -->
-<div class="ml-0 md:ml-64 p-6 max-md:mt-[5rem]">
-  <h1 class="text-2xl font-bold mb-4">My Tasks</h1>
+<div class="ml-0 md:ml-64 p-4 md:p-6 max-md:mt-[5rem]">
+  <h1 class="text-2xl font-bold mb-4">My Notepad</h1>
 
-  <!-- Add Task Form -->
-  <form method="POST" class="mb-6 bg-transparent p-4 rounded">
+  <!-- Editor -->
+  <form method="POST">
     {% csrf_token %}
-    <input type="text" name="title" placeholder="Task Title" class="w-full p-2 mb-2 rounded text-black border border-white" required>
-    <textarea name="description" placeholder="Task Description" class="w-full p-2 mb-2 rounded text-black border border-white"></textarea>
-    <button type="submit" class="bg-[#6c024d] text-white px-4 py-2 rounded">Add Task</button>
+    {% if note %}
+      <input type="hidden" name="note_id" value="{{ note.id }}">
+    {% endif %}
+    <input type="text" name="title" 
+           value="{% if note %}{{ note.title }}{% endif %}" 
+           placeholder="Title"
+           class="w-full border p-2 rounded mb-2">
+    <textarea name="content" rows="10" class="w-full border p-3 rounded mb-3">{% if note %}{{ note.content }}{% endif %}</textarea>
+    <button type="submit" class="mt-3 bg-[#250f1e] text-white px-4 py-2 rounded">Save</button>
   </form>
 
-  <!-- Task list -->
-  <div class="space-y-4">
-    {% for task in tasks %}
-      <div class="task-item {% if task.status == 'completed' %}completed{% endif %} bg-gray-900 p-4 rounded shadow flex justify-between items-center">
-        <div>
-          <h2 class="font-semibold">{{ task.title }}</h2>
-          <p class="text-sm text-gray-400">{{ task.description }}</p>
-          <p class="text-xs mt-1">Status: 
-            <span class="font-bold {% if task.status == 'completed' %}text-green-400{% else %}text-yellow-400{% endif %}">{{ task.get_status_display }}</span>
-          </p>
-        </div>
+  <!-- New Note button -->
+  <div class="mt-4">
+    <a href="{% url 'teammember_notepad' %}" class="px-3 py-1 border rounded bg-gray-700 text-white">+ New Note</a>
+  </div>
 
-        <!-- Update status -->
-        <form method="POST" action="{% url 'update_task' task.id %}">
-          {% csrf_token %}
-          <select name="status" class="status-select" onchange="this.form.submit()">
-            <option value="pending" {% if task.status == 'pending' %}selected{% endif %}>Pending</option>
-            <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
-            <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
-          </select>
-        </form>
-      </div>
+  <!-- Saved Notes Tabs -->
+  <h2 class="text-xl font-semibold mt-6 mb-2">Your Saved Notes</h2>
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    {% for n in page_obj %}
+      <a href="?note_id={{ n.id }}" 
+         class="px-3 py-2 border rounded hover:bg-purple-300 hover:text-black 
+         {% if note and note.id == n.id %}bg-[#250f1e]/60 text-white{% else %}bg-gray-300 text-black{% endif %}">
+        {{ n.title }}
+      </a>
     {% empty %}
-      <p>No tasks yet.</p>
+      <p class="col-span-4 text-gray-400">No saved notes yet.</p>
     {% endfor %}
   </div>
+
+  <!-- Pagination -->
+  <div class="flex justify-center gap-2 mt-4">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 bg-gray-300 text-black rounded">Previous</a>
+    {% endif %}
+
+    <span class="px-3 py-1 rounded bg-gray-200 text-black">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 bg-gray-300 rounded text-black">Next</a>
+    {% endif %}
+  </div>
 </div>
-
-<!-- Toast container -->
-<div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
-
-<script>
-  function showToast(message) {
-    const toast = document.createElement("div");
-    toast.className = "bg-yellow-500 text-black px-4 py-2 rounded shadow";
-    toast.innerText = message;
-    document.getElementById("toast-container").appendChild(toast);
-    setTimeout(() => { toast.remove(); }, 4000);
-  }
-
-  function checkTasks() {
-    const tasks = document.querySelectorAll(".task-item");
-    let pendingTasks = [];
-    tasks.forEach(task => {
-      if (!task.classList.contains("completed")) {
-        pendingTasks.push(task.querySelector("h2").innerText);
-      }
-    });
-    if (pendingTasks.length > 0) {
-      showToast("You have pending tasks: " + pendingTasks.join(", "));
-    }
-  }
-
-  setInterval(checkTasks, 10000);
-</script>
 
 <script src="{% static 'js/admin.js' %}"></script>
 

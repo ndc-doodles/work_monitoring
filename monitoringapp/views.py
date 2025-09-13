@@ -241,27 +241,28 @@ def login_view(request):
 
         try:
             user = User.objects.get(username=username)
-
-            if user.password == password:  # ⚠️ insecure, use check_password later
+            
+            if user.password == password:
                 db_position = user.job_Position.lower().replace(" ", "_")
                 if db_position == position:
-                    # ✅ Store session data
-                    request.session['user_id'] = user.id
-                    request.session['position'] = position
-                    request.session['login_time'] = timezone.now().isoformat()  # save in ISO format
+                    # ✅ FIX: Mark user as active on login
+                    user.status = "active"
+                    user.last_login_time = timezone.now()
+                    user.save()
 
-                    if position == "team_lead":
-                        return redirect('teamlead_dashboard')
+                    request.session["user_id"] = user.id
+                    request.session["position"] = db_position
+                    request.session["login_time"] = str(timezone.now())
+
+                    if db_position == "team_lead":
+                        return redirect("teamlead_dashboard")
                     else:
-                        return redirect('teammember_dashboard')
-                else:
-                    messages.error(request, "Invalid position for this user")
-            else:
-                messages.error(request, "Invalid username or password")
-        except User.DoesNotExist:
-            messages.error(request, "Invalid username or password")
+                        return redirect("teammember_dashboard")
 
-    return render(request, 'user_login.html')
+        except User.DoesNotExist:
+            pass  
+
+    return render(request, "user_login.html")
 
 
 
@@ -336,25 +337,22 @@ def reset_password(request):
 
 
 
-
 def teamlead_dashboard(request):
     team_lead = User.objects.get(id=request.session['user_id'])  
     team_name = team_lead.team  
 
-    # ✅ Fetch login time from session and convert back to datetime
+    # Team Lead’s login time
     login_time_str = request.session.get('login_time')
     login_time = parse_datetime(login_time_str) if login_time_str else None
-
     if login_time:
-        # If it's naive (no timezone info), make it aware
         if is_naive(login_time):
             login_time = make_aware(login_time)
-        # Convert to local timezone (Asia/Kolkata from settings.py)
         login_time = localtime(login_time)
 
+    # Announcements
     if request.method == "POST":
         message = request.POST.get("message")
-        if message.strip():
+        if message and message.strip():
             Announcement.objects.create(
                 title="Announcement",
                 message=message,
@@ -363,17 +361,30 @@ def teamlead_dashboard(request):
             )
         return redirect('teamlead_dashboard')
 
+    # ✅ Only read data, don’t overwrite statuses
     team_members = User.objects.filter(team=team_lead.team)
 
     total_users = team_members.count()
     active_members = team_members.filter(status="active").count()
     inactive_members = team_members.filter(status="inactive").count()
 
+    # ✅ Find most recent login among team members
+    last_login_user = team_members.filter(last_login_time__isnull=False).order_by('-last_login_time').first()
+    last_login = localtime(last_login_user.last_login_time) if last_login_user else None
+
+    # Announcements in last 12 hours
     cutoff = timezone.now() - timedelta(hours=12)
     announcements = Announcement.objects.filter(
         created_by=team_lead,
         created_at__gte=cutoff
     ).order_by('-created_at')
+
+    # Format login/logout times for display
+    for member in team_members:
+        if member.last_login_time:
+            member.last_login_time = localtime(member.last_login_time)
+        if member.last_logout_time:
+            member.last_logout_time = localtime(member.last_logout_time)
 
     return render(request, 'teamlead_dashboard.html', {
         'total_users': total_users,
@@ -381,8 +392,11 @@ def teamlead_dashboard(request):
         'inactive_members': inactive_members,
         'team_members': team_members,
         'announcements': announcements,
-        'login_time': login_time,  # ✅ IST datetime for template
+        'login_time': login_time,
+        'last_login': last_login,
     })
+
+
 
 def is_within_time_range(start_time, end_time, now=None):
     now = now or timezone.localtime().time()
@@ -608,29 +622,30 @@ def project_assign_delete(request, pk):
 
 
 def teammember_project(request):
-    user = get_object_or_404(User, id=request.session["user_id"])
+    user = get_object_or_404(User, id=request.session.get("user_id"))
+
+    # Only projects assigned to the logged-in user
     projects = ProjectAssign.objects.filter(assign_to=user).order_by("-assigned_date")
+
     return render(request, "teammember_project.html", {"projects": projects})
 
 def teamlead_notepad(request):
-    user = get_object_or_404(User, id=request.session.get("user_id"))
+    user_id = request.session.get("user_id")
+    user = get_object_or_404(User, id=user_id)
 
-    # All notes for this user
+    # ✅ Only this user's notes
     all_notes = Notepad.objects.filter(user=user).order_by("-updated_at")
 
-    # Pagination (4 notes per page)
+    # Pagination
     paginator = Paginator(all_notes, 4)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    # Note to edit/view
-    note_id = request.GET.get("note_id")
+    # View/Edit a specific note (only if it belongs to this user)
     note = None
+    note_id = request.GET.get("note_id")
     if note_id:
-        try:
-            note = Notepad.objects.get(id=note_id, user=user)
-        except Notepad.DoesNotExist:
-            note = None  # If invalid ID, open new note
+        note = Notepad.objects.filter(id=note_id, user=user).first()
 
     if request.method == "POST":
         note_id_post = request.POST.get("note_id")
@@ -638,18 +653,23 @@ def teamlead_notepad(request):
         content = request.POST.get("content")
 
         if note_id_post:
-            # Update existing note
+            # ✅ Update only if owned by this user
             note = get_object_or_404(Notepad, id=note_id_post, user=user)
             note.title = title
             note.content = content
             note.save()
         else:
-            # Create new note
+            # ✅ New note tied to this user
             note = Notepad.objects.create(user=user, title=title, content=content)
 
         return redirect(f"{request.path}?note_id={note.id}")
 
-    return render(request, "teamlead_notepad.html", {"note": note, "page_obj": page_obj})
+    return render(
+        request,
+        "teamlead_notepad.html",
+        {"note": note, "page_obj": page_obj},
+    )
+
 
 def teammember_notepad(request):
     user = get_object_or_404(User, id=request.session.get("user_id"))
@@ -839,22 +859,27 @@ def teammember_profile(request):
 
     return render(request, "teammember_profile.html", {"user": user})
 
+# TEAM MEMBER TASK LIST & CREATE
 def teammember_task(request):
     user_id = request.session.get("user_id")
     if not user_id:
-        return redirect("login_view")  # redirect if no session found
+        return redirect("login_view")
 
     user = User.objects.get(id=user_id)
-    tasks = Task.objects.filter(assigned_to=user)
+
+    # ✅ Only tasks created by this logged-in user
+    tasks = Task.objects.filter(created_by=user).order_by('-created_at')
 
     if request.method == "POST":
         title = request.POST.get("title")
         description = request.POST.get("description")
-        Task.objects.create(
-            title=title,
-            description=description,
-            assigned_to=user
-        )
+        if title:  # prevent empty titles
+            Task.objects.create(
+                title=title,
+                description=description,
+                assigned_to=user,   # optional: assign to self
+                created_by=user     # track who created it
+            )
         return redirect("teammember_task")
 
     return render(request, "teammember_task.html", {"tasks": tasks})
@@ -867,20 +892,20 @@ def update_task(request, task_id):
         return redirect("login_view")
 
     user = User.objects.get(id=user_id)
-    task = get_object_or_404(Task, id=task_id, assigned_to=user)
+
+    # ✅ Only allow updating tasks created by this user
+    task = get_object_or_404(Task, id=task_id, created_by=user)
 
     if request.method == "POST":
         status = request.POST.get("status")
         task.status = status
-        if status == "completed":
-            task.progress = 100
-        elif status == "in_progress":
-            task.progress = 50
-        else:
-            task.progress = 0
+        # Update progress based on status
+        task.progress = {"pending": 0, "in_progress": 50, "completed": 100}.get(status, 0)
         task.save()
 
     return redirect("teammember_task")
+
+
 # TEAM MEMBER DELETE TASK
 def delete_task(request, task_id):
     user_id = request.session.get("user_id")
@@ -888,7 +913,9 @@ def delete_task(request, task_id):
         return redirect("login_view")
 
     user = User.objects.get(id=user_id)
-    task = get_object_or_404(Task, id=task_id, assigned_to=user)
+
+    # ✅ Only allow deletion of tasks created by this user
+    task = get_object_or_404(Task, id=task_id, created_by=user)
 
     if request.method == "POST":
         task.delete()
@@ -896,14 +923,15 @@ def delete_task(request, task_id):
     return redirect("teammember_task")
 
 
-# TEAM LEAD TASK VIEW (now similar to team member)
+
 def teamlead_task(request):
     user_id = request.session.get("user_id")
     if not user_id:
-        return redirect("login_view")  # redirect if no session found
+        return redirect("login_view")  # redirect if not logged in
 
     user = User.objects.get(id=user_id)
-    tasks = Task.objects.filter(assigned_to=user)  # only show tasks for logged-in user
+    # ✅ Only show tasks created by this logged-in user
+    tasks = Task.objects.filter(created_by=user).order_by('-created_at')
 
     if request.method == "POST":
         title = request.POST.get("title")
@@ -911,34 +939,31 @@ def teamlead_task(request):
         Task.objects.create(
             title=title,
             description=description,
-            assigned_to=user  # store with logged-in user's id
+            assigned_to=user,   # optional: you can assign to self
+            created_by=user     # track who created the task
         )
         return redirect("teamlead_task")
 
     return render(request, 'teamlead_task.html', {"tasks": tasks})
 
 
-# TEAM LEAD UPDATE TASK
 def update_task_teamlead(request, task_id):
     user_id = request.session.get("user_id")
     if not user_id:
         return redirect("login_view")
 
     user = User.objects.get(id=user_id)
-    task = get_object_or_404(Task, id=task_id, assigned_to=user)
+    # ✅ Only allow updating tasks created by logged-in user
+    task = get_object_or_404(Task, id=task_id, created_by=user)
 
     if request.method == "POST":
         status = request.POST.get("status")
         task.status = status
-        if status == "completed":
-            task.progress = 100
-        elif status == "in_progress":
-            task.progress = 50
-        else:
-            task.progress = 0
+        task.progress = {"pending": 0, "in_progress": 50, "completed": 100}.get(status, 0)
         task.save()
 
     return redirect('teamlead_task')
+
 
 def delete_task_teamlead(request, task_id):
     user_id = request.session.get("user_id")
@@ -946,7 +971,8 @@ def delete_task_teamlead(request, task_id):
         return redirect("login_view")
 
     user = User.objects.get(id=user_id)
-    task = get_object_or_404(Task, id=task_id, assigned_to=user)
+    # ✅ Only allow deletion of tasks created by logged-in user
+    task = get_object_or_404(Task, id=task_id, created_by=user)
 
     if request.method == "POST":
         task.delete()
@@ -954,15 +980,30 @@ def delete_task_teamlead(request, task_id):
     return redirect("teamlead_task")
 
 
+
 def teamlead_logout(request):
-    if 'user_id' in request.session:
-        request.session.flush()
-        messages.success(request, "Team Lead logged out successfully!")
-    return redirect('login')  # ✅ correct name
+    if "user_id" in request.session:
+        try:
+            user = User.objects.get(id=request.session["user_id"])
+            user.status = "inactive"   # ✅ Mark user inactive
+            user.last_logout_time = timezone.now()
+            user.save()
+        except User.DoesNotExist:
+            pass
+
+    request.session.flush()
+    return redirect("login")
 
 
 def teammember_logout(request):
-    if 'user_id' in request.session:
-        request.session.flush()
-        messages.success(request, "Team Member logged out successfully!")
-    return redirect('login')  # ✅ correct name
+    if "user_id" in request.session:
+        try:
+            user = User.objects.get(id=request.session["user_id"])
+            user.status = "inactive"   # ✅ Mark user inactive
+            user.last_logout_time = timezone.now()
+            user.save()
+        except User.DoesNotExist:
+            pass
+
+    request.session.flush()
+    return redirect("login")

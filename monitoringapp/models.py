@@ -25,7 +25,6 @@ class Team(models.Model):
 
 
 
-
 class User(models.Model):
     STATUS_CHOICES = (
         ('active', 'Active'),
@@ -39,7 +38,6 @@ class User(models.Model):
 
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True)
     team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True)
-  
 
     job_Position = models.CharField(max_length=100)
     designation = models.CharField(max_length=100)
@@ -48,11 +46,16 @@ class User(models.Model):
 
     username = models.CharField(max_length=100, unique=True)
     password = models.CharField(max_length=128)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='inactive')
     profile_image = models.ImageField(upload_to='user_images/', blank=True, null=True)
+
+    # ✅ Add these fields
+    last_login_time = models.DateTimeField(null=True, blank=True)
+    last_logout_time = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.name} ({self.designation})"
+
     
 
 class Announcement(models.Model):
@@ -194,7 +197,18 @@ class Task(models.Model):
     ]
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    assigned_to = models.ForeignKey(User, on_delete=models.CASCADE)
+    assigned_to = models.ForeignKey(
+        "User", 
+        on_delete=models.CASCADE, 
+        related_name="tasks_assigned"
+    )
+    created_by = models.ForeignKey(
+        "User", 
+        on_delete=models.CASCADE, 
+        related_name="tasks_created",
+        null=True,  # temporarily allow null for existing rows
+        blank=True
+    )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     progress = models.IntegerField(default=0)  # percentage
     created_at = models.DateTimeField(auto_now_add=True)
