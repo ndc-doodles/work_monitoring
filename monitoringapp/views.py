@@ -18,6 +18,8 @@ from django.core.mail import send_mail
 from datetime import time, timedelta
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import localtime, make_aware, is_naive
+from django.views.decorators.cache import never_cache
+
 
 
 
@@ -34,23 +36,30 @@ def index(request):
     return render(request,'index.html')
 
 
+@never_cache  
 def admin_login(request):
+    if request.user.is_authenticated and request.user.is_superuser:
+        return redirect('admin_dashboard')
+
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
         user = authenticate(request, username=username, password=password)
         if user is not None and user.is_superuser:
             login(request, user)
-            return redirect('admin_dashboard')  
+            return redirect('admin_dashboard')
         else:
             messages.error(request, "Invalid credentials or not a superuser")
+
     return render(request, 'admin_login.html')
+
 def admin_logout(request):
    
     request.session.flush()  
     
     
     return redirect("admin_login")
+
 def admin_dashboard(request):
     if request.method == "POST":
         if "add_department" in request.POST:
@@ -98,8 +107,8 @@ def admin_usermanagement(request):
         employee_id = request.POST.get("employee_id")
         email = request.POST.get("email")
         phone = request.POST.get("phone")
-        department_name = request.POST.get("department")
-        team_name = request.POST.get("team")
+        department_id = request.POST.get("department")
+        team_id = request.POST.get("team")
         job_Position = request.POST.get("job_Position")
         designation = request.POST.get("designation")
         work_location = request.POST.get("work_location")
@@ -107,23 +116,23 @@ def admin_usermanagement(request):
         password = request.POST.get("password")
         status = request.POST.get("status")
         image = request.FILES.get("profile_image")
+        joining_date = request.POST.get("joining_date")
 
-        department = get_object_or_404(Department, name=department_name) if department_name else None
-        team = get_object_or_404(Team, name=team_name) if team_name else None
+        department = Department.objects.get(id=department_id) if department_id else None
+        team = Team.objects.get(id=team_id) if team_id else None
 
         if user_id:  # Edit existing user
             user = get_object_or_404(User, id=user_id)
 
-            # Check uniqueness for employee_id and username, excluding current user
+            # Uniqueness checks excluding current user
             if User.objects.filter(employee_id=employee_id).exclude(id=user.id).exists():
                 messages.error(request, "⚠️ Employee ID already exists for another user.")
                 return redirect("admin_usermanagement")
-
             if User.objects.filter(username=username).exclude(id=user.id).exists():
                 messages.error(request, "⚠️ Username already exists for another user.")
                 return redirect("admin_usermanagement")
 
-            # Update user
+            # Update user fields
             user.name = name
             user.employee_id = employee_id
             user.email = email
@@ -134,10 +143,17 @@ def admin_usermanagement(request):
             user.designation = designation
             user.work_location = work_location
             user.username = username
-            user.password = password
             user.status = status
+            if password:
+                user.password = make_password(password)
             if image:
                 user.profile_image = image
+            if joining_date:
+                try:
+                    user.joining_date = datetime.strptime(joining_date, "%Y-%m-%d").date()
+                except ValueError:
+                    messages.error(request, "Invalid date format! Use YYYY-MM-DD.")
+                    return redirect("admin_usermanagement")
             user.save()
             messages.success(request, "✅ User updated successfully!")
         
@@ -145,7 +161,6 @@ def admin_usermanagement(request):
             if User.objects.filter(employee_id=employee_id).exists():
                 messages.error(request, "⚠️ Employee ID already exists. Please choose another one.")
                 return redirect("admin_usermanagement")
-
             if User.objects.filter(username=username).exists():
                 messages.error(request, "⚠️ Username already exists. Please choose another one.")
                 return redirect("admin_usermanagement")
@@ -155,15 +170,16 @@ def admin_usermanagement(request):
                 employee_id=employee_id,
                 email=email,
                 phone=phone,
-                department=department,  
-                team=team,             
+                department=department,
+                team=team,
                 job_Position=job_Position,
                 designation=designation,
                 work_location=work_location,
                 username=username,
-                password=password,
+                password=make_password(password) if password else "",
                 status=status,
-                profile_image=image
+                profile_image=image,
+                joining_date=datetime.strptime(joining_date, "%Y-%m-%d").date() if joining_date else None
             )
             messages.success(request, "✅ User created successfully!")
 
@@ -176,10 +192,6 @@ def admin_usermanagement(request):
     }
     return render(request, "admin_usermanagement.html", context)
 
-def delete_user(request, id):
-    user = get_object_or_404(User, id=id)
-    user.delete()
-    return redirect('admin_usermanagement') 
 
 def edit_user(request):
     if request.method == "POST":
@@ -191,21 +203,11 @@ def edit_user(request):
         user.email = request.POST.get("edit_email")
         user.phone = request.POST.get("edit_phone")
 
-        # Department + Team (FKs)
-        department_name = request.POST.get("edit_department")
-        team_name = request.POST.get("edit_team")
-
-        if department_name:
-            try:
-                user.department = Department.objects.get(name=department_name)
-            except Department.DoesNotExist:
-                user.department = None
-
-        if team_name:
-            try:
-                user.team = Team.objects.get(name=team_name)
-            except Team.DoesNotExist:
-                user.team = None
+        # Department + Team (FKs via dropdown IDs)
+        dept_id = request.POST.get("edit_department")
+        team_id = request.POST.get("edit_team")
+        user.department = Department.objects.get(id=dept_id) if dept_id else None
+        user.team = Team.objects.get(id=team_id) if team_id else None
 
         user.job_Position = request.POST.get("edit_job_position")
         user.designation = request.POST.get("edit_designation")
@@ -213,7 +215,7 @@ def edit_user(request):
         user.username = request.POST.get("edit_username")
         user.status = request.POST.get("edit_status")
 
-        # 🔐 Handle password (hash it!)
+        # Password (hash it)
         password = request.POST.get("edit_password")
         if password:
             user.password = make_password(password)
@@ -234,11 +236,27 @@ def edit_user(request):
             user.profile_image = request.FILES["edit_profile_upload"]
 
         user.save()
-        messages.success(request, "User updated successfully!")
+        messages.success(request, "✅ User updated successfully!")
         return redirect("admin_usermanagement")
 
     return redirect("admin_usermanagement")
+
+
+
+def delete_user(request, id):
+    user = get_object_or_404(User, id=id)
+    user.delete()
+    return redirect('admin_usermanagement') 
+
+@never_cache  # Prevent browser caching
 def login_view(request):
+    # If user is already logged in, redirect to dashboard
+    if request.session.get("user_id") and request.session.get("position"):
+        if request.session["position"] == "team_lead":
+            return redirect("teamlead_dashboard")
+        else:
+            return redirect("teammember_dashboard")
+
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
@@ -246,26 +264,27 @@ def login_view(request):
 
         try:
             user = User.objects.get(username=username)
-            
             if user.password == password:
                 db_position = user.job_Position.lower().replace(" ", "_")
                 if db_position == position:
-                    # ✅ FIX: Mark user as active on login
+                    # Mark user as active
                     user.status = "active"
                     user.last_login_time = timezone.now()
                     user.save()
 
+                    # Save session
                     request.session["user_id"] = user.id
                     request.session["position"] = db_position
                     request.session["login_time"] = str(timezone.now())
 
+                    # Redirect to dashboard
                     if db_position == "team_lead":
                         return redirect("teamlead_dashboard")
                     else:
                         return redirect("teammember_dashboard")
 
         except User.DoesNotExist:
-            pass  
+            pass
 
     return render(request, "user_login.html")
 
@@ -342,11 +361,21 @@ def reset_password(request):
 
 
 
+@never_cache
 def teamlead_dashboard(request):
-    team_lead = User.objects.get(id=request.session['user_id'])  
-    team_name = team_lead.team  
+    # ❌ Redirect if not logged in
+    if not request.session.get("user_id") or request.session.get("position") != "team_lead":
+        return redirect("login")
 
-    # Team Lead’s login time
+    try:
+        team_lead = User.objects.get(id=request.session['user_id'])
+    except User.DoesNotExist:
+        request.session.flush()
+        return redirect("login")
+
+    team_name = team_lead.team
+
+    # Login time
     login_time_str = request.session.get('login_time')
     login_time = parse_datetime(login_time_str) if login_time_str else None
     if login_time:
@@ -354,7 +383,7 @@ def teamlead_dashboard(request):
             login_time = make_aware(login_time)
         login_time = localtime(login_time)
 
-    # Announcements
+    # Post new announcement
     if request.method == "POST":
         message = request.POST.get("message")
         if message and message.strip():
@@ -362,29 +391,28 @@ def teamlead_dashboard(request):
                 title="Announcement",
                 message=message,
                 created_by=team_lead,
-                created_at=timezone.now()
+                created_at=now()
             )
         return redirect('teamlead_dashboard')
 
-    # ✅ Only read data, don’t overwrite statuses
+    # Team members data
     team_members = User.objects.filter(team=team_lead.team)
-
     total_users = team_members.count()
     active_members = team_members.filter(status="active").count()
     inactive_members = team_members.filter(status="inactive").count()
 
-    # ✅ Find most recent login among team members
+    # Most recent login
     last_login_user = team_members.filter(last_login_time__isnull=False).order_by('-last_login_time').first()
     last_login = localtime(last_login_user.last_login_time) if last_login_user else None
 
-    # Announcements in last 12 hours
-    cutoff = timezone.now() - timedelta(hours=12)
+    # Announcements from last 12 hours
+    cutoff = now() - timedelta(hours=12)
     announcements = Announcement.objects.filter(
         created_by=team_lead,
         created_at__gte=cutoff
     ).order_by('-created_at')
 
-    # Format login/logout times for display
+    # Format login/logout times
     for member in team_members:
         if member.last_login_time:
             member.last_login_time = localtime(member.last_login_time)
@@ -401,36 +429,47 @@ def teamlead_dashboard(request):
         'last_login': last_login,
     })
 
-
-
 def is_within_time_range(start_time, end_time, now=None):
     now = now or timezone.localtime().time()
     return start_time <= now <= end_time
 
+@never_cache
 def teammember_dashboard(request):
-    team_member = User.objects.get(id=request.session['user_id'])
-    team_name = team_member.team  
+    # ❌ Redirect if not logged in
+    if not request.session.get("user_id") or request.session.get("position") != "team_member":
+        return redirect("login")
 
+    try:
+        team_member = User.objects.get(id=request.session['user_id'])
+    except User.DoesNotExist:
+        request.session.flush()
+        return redirect("login")
+
+    team_name = team_member.team
+
+    # Login time
     login_time_str = request.session.get('login_time')
     login_time = parse_datetime(login_time_str) if login_time_str else None
-
     if login_time:
         if is_naive(login_time):
             login_time = make_aware(login_time)
-        login_time = localtime(login_time)  
+        login_time = localtime(login_time)
 
-    cutoff = timezone.now() - timedelta(hours=12)
+    # Announcements from last 12 hours
+    cutoff = now() - timedelta(hours=12)
     announcements = Announcement.objects.filter(
-        created_by__team=team_name,   
+        created_by__team=team_name,
         created_at__gte=cutoff
     ).order_by('-created_at')
 
+    # Morning/Evening time windows
     morning_start, morning_end = time(9, 30), time(10, 30)
     evening_start, evening_end = time(17, 0), time(18, 15)
 
     if request.method == "POST":
-        now_time = timezone.localtime().time()
+        now_time = localtime().time()
 
+        # Morning report
         if 'morning_submit' in request.POST:
             if is_within_time_range(morning_start, morning_end, now_time):
                 report_text = request.POST.get("morning_report")
@@ -448,6 +487,7 @@ def teammember_dashboard(request):
             else:
                 messages.error(request, "You can only submit morning reports between 9:30 and 10:30 AM.")
 
+        # Evening report
         elif 'evening_submit' in request.POST:
             if is_within_time_range(evening_start, evening_end, now_time):
                 report_text = request.POST.get("evening_report")
@@ -469,7 +509,7 @@ def teammember_dashboard(request):
         'announcements': announcements,
         'morning_allowed': is_within_time_range(morning_start, morning_end),
         'evening_allowed': is_within_time_range(evening_start, evening_end),
-        'login_time': login_time,  
+        'login_time': login_time,
     })
 def teamlead_reports(request):
     team_lead = get_object_or_404(User, id=request.session['user_id'])

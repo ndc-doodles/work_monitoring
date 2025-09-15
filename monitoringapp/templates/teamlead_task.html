@@ -102,7 +102,6 @@
         </div>
 
         <div class="flex gap-2 items-center">
-          <!-- Update status -->
           <form method="POST" action="{% url 'update_task_teamlead' task.id %}">
     {% csrf_token %}
     <select name="status" class="status-select text-sm lg:text-base px-2 py-1 md:px-3 md:py-2" onchange="this.form.submit()">
@@ -113,7 +112,6 @@
 </form>
 
 
-          <!-- Delete task -->
           <form method="POST" action="{% url 'delete_task_teamlead' task.id %}">
             {% csrf_token %}
             <button type="submit" class="text-red-500 hover:text-red-700" title="Delete Task">
