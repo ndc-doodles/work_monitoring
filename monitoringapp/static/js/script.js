@@ -94,15 +94,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
 document.addEventListener("DOMContentLoaded", () => {
   const animatedText = document.getElementById("animated-text");
 
-  // observer to trigger when paragraph enters view
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         animateText(animatedText);
-        observer.unobserve(animatedText); // run only once
+        observer.unobserve(animatedText);
       }
     });
   }, { threshold: 0.3 });
@@ -110,16 +110,17 @@ document.addEventListener("DOMContentLoaded", () => {
   observer.observe(animatedText);
 
   function animateText(element) {
-    const span = element.querySelector("span"); // skip this span
-    const hiddenText = element.innerText.replace(span.innerText, ""); // remove span text
-    element.innerHTML = span.outerHTML; // keep span as it is
-    let i = 0;
+    const span = element.querySelector("span"); // static text
+    const fullText = element.innerText;
+    const staticText = span.innerText;
+    const hiddenText = fullText.replace(staticText, "");
 
+    let i = 0;
     function typeEffect() {
       if (i < hiddenText.length) {
-        element.innerHTML = span.outerHTML + hiddenText.slice(0, i + 1);
+        element.innerHTML = `<span>${staticText}</span>` + hiddenText.slice(0, i + 1);
         i++;
-        setTimeout(typeEffect, 40); // speed (ms) per letter
+        setTimeout(typeEffect, 40);
       }
     }
 
@@ -127,3 +128,4 @@ document.addEventListener("DOMContentLoaded", () => {
     typeEffect();
   }
 });
+

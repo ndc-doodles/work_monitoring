@@ -45,7 +45,12 @@ def admin_login(request):
         else:
             messages.error(request, "Invalid credentials or not a superuser")
     return render(request, 'admin_login.html')
-
+def admin_logout(request):
+   
+    request.session.flush()  
+    
+    
+    return redirect("admin_login")
 def admin_dashboard(request):
     if request.method == "POST":
         if "add_department" in request.POST:

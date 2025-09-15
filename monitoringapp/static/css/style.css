@@ -121,7 +121,7 @@ p{
 
 
 #animated-text {
-  opacity: 0; /* hidden before animation */
+  opacity: 30; /* hidden before animation */
   
 }
 .revealed {
