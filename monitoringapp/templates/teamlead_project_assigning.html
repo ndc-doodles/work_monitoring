@@ -96,7 +96,7 @@ select:focus {
 
 
 
-<div class="ml-0 md:ml-64 p-4 md:p-6">
+<div class="ml-0 md:ml-64 p-4 md:p-6 max-md:mt-20">
   <h1 class="text-2xl font-bold mb-6">Assign Project</h1>
 
   <form method="POST" enctype="multipart/form-data" class="space-y-4 bg-transparent border-2 border-[#250f1e] text-white p-6 rounded-lg shadow">
@@ -168,14 +168,15 @@ select:focus {
     </div>
 
     <div>
-      <label class="block font-medium">Upload File</label>
-      <input type="file" name="upload_file" class="w-full border rounded p-2">
-    </div>
+  <label class="block font-medium">Upload File</label>
+  <input type="file" name="upload_file[]" class="w-full border rounded p-2" multiple>
+</div>
 
-    <div>
-      <label class="block font-medium">Upload Image</label>
-      <input type="file" name="upload_image" accept="image/*" class="w-full border rounded p-2">
-    </div>
+<div>
+  <label class="block font-medium">Upload Image</label>
+  <input type="file" name="upload_image[]" accept="image/*" class="w-full border rounded p-2" multiple>
+</div>
+
 
     <div>
       <label class="block font-medium">Color Preference</label>
@@ -225,10 +226,22 @@ select:focus {
           <td class="px-4 py-2 border">{{ project.department.name }}</td>
           <td class="px-4 py-2 border">{{ project.work_name }}</td>
           <td class="px-4 py-2 border">{{ project.assign_to.name }}</td>
-          <td class="px-4 py-2 border space-x-2">
-            <button onclick="document.getElementById('editModal{{ project.id }}').classList.remove('hidden')" class="px-2 py-1 bg-blue-600 rounded hover:bg-blue-700">Edit</button>
-            <a href="{% url 'project_assign_delete' project.id %}" class="px-2 py-1 bg-red-600 rounded hover:bg-red-700" onclick="return confirm('Are you sure?')">Delete</a>
-          </td>
+         <td class="px-4 py-2 border">
+  <div class="flex flex-nowrap gap-2">
+    <button 
+      onclick="document.getElementById('editModal{{ project.id }}').classList.remove('hidden')" 
+      class="px-3 py-1 bg-blue-600 rounded hover:bg-blue-700 text-white text-sm">
+      Edit
+    </button>
+    <a 
+      href="{% url 'project_assign_delete' project.id %}" 
+      class="px-3 py-1 bg-red-600 rounded hover:bg-red-700 text-white text-sm"
+      onclick="return confirm('Are you sure?')">
+      Delete
+    </a>
+  </div>
+</td>
+
         </tr>
 
         <div id="editModal{{ project.id }}" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -299,14 +312,43 @@ select:focus {
               </div>
 
               <div>
-                <label class="text-white">Upload File</label>
-                <input type="file" name="upload_file" class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">
-              </div>
+  <label class="text-white">Upload File(s)</label>
+  <input type="file" name="upload_file[]" multiple 
+         class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">
+</div>
+{% if project.files.all %}
+  <div class="mt-2 text-white">
+    <p class="font-semibold">Existing Files:</p>
+    <ul class="list-disc ml-6">
+      {% for f in project.files.all %}
+        <li>
+          <a href="{{ f.file.url }}" target="_blank" class="underline text-blue-400">
+            {{ f.file.name|slice:"15:" }} <!-- show filename nicely -->
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
 
-              <div>
-                <label class="text-white">Upload Image</label>
-                <input type="file" name="upload_image" accept="image/*" class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">
-              </div>
+<div>
+  <label class="text-white">Upload Image(s)</label>
+  <input type="file" name="upload_image[]" multiple accept="image/*" 
+         class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">
+</div>
+{% if project.images.all %}
+  <div class="mt-2 text-white">
+    <p class="font-semibold">Existing Images:</p>
+    <div class="flex gap-2 flex-wrap">
+      {% for img in project.images.all %}
+        <div class="w-24 h-24">
+          <img src="{{ img.image.url }}" alt="Project Image"
+               class="w-full h-full object-cover rounded border border-gray-600">
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
 
               <div>
                 <label class="text-white">Color Preference</label>

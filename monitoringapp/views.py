@@ -411,14 +411,13 @@ def teammember_dashboard(request):
     team_member = User.objects.get(id=request.session['user_id'])
     team_name = team_member.team  
 
-    # ✅ Fetch login time from session
     login_time_str = request.session.get('login_time')
     login_time = parse_datetime(login_time_str) if login_time_str else None
 
     if login_time:
         if is_naive(login_time):
             login_time = make_aware(login_time)
-        login_time = localtime(login_time)  # ✅ converts to IST if TIME_ZONE = "Asia/Kolkata"
+        login_time = localtime(login_time)  
 
     cutoff = timezone.now() - timedelta(hours=12)
     announcements = Announcement.objects.filter(
@@ -470,15 +469,13 @@ def teammember_dashboard(request):
         'announcements': announcements,
         'morning_allowed': is_within_time_range(morning_start, morning_end),
         'evening_allowed': is_within_time_range(evening_start, evening_end),
-        'login_time': login_time,  # ✅ send to template
+        'login_time': login_time,  
     })
-
 def teamlead_reports(request):
     team_lead = get_object_or_404(User, id=request.session['user_id'])
     team_name = team_lead.team
     show_all = request.GET.get('all') == '1'
 
-    # Filter reports (today or all)
     if show_all:
         morning_reports = MorningReport.objects.filter(team=team_name).order_by('-created_at')
         evening_reports = EveningReport.objects.filter(team=team_name).order_by('-created_at')
@@ -487,71 +484,68 @@ def teamlead_reports(request):
         morning_reports = MorningReport.objects.filter(team=team_name, created_at__date=today)
         evening_reports = EveningReport.objects.filter(team=team_name, created_at__date=today)
 
-    # Handle Excel export
     if 'export' in request.GET:
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Team Reports"
+        if not morning_reports.exists() and not evening_reports.exists():
+            messages.error(request, "No reports available to export.")  # ✅ Use messages
+            return redirect("teamlead_reports")  # redirect so message clears properly
+        else:
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Team Reports"
 
-        # Set headers (added Status column)
-        headers = ["Date", "Time", "Report Type", "Name", "Team", "Department", "Report", "Status"]
-        ws.append(headers)
+            headers = ["Date", "Time", "Report Type", "Name", "Team", "Department", "Report", "Status"]
+            ws.append(headers)
 
-        # Function to add reports to Excel
-        def add_reports(report_list, report_type):
-            for report in report_list:
-                local_time = timezone.localtime(report.created_at)  # Convert UTC → Local
-                ws.append([
-                    local_time.strftime("%Y-%m-%d"),
-                    local_time.strftime("%I:%M %p"),
-                    report_type,
-                    getattr(report.user, "name", report.user.username),  # Safe fallback
-                    report.team,
-                    report.department,
-                    report.report_text,
-                    report.status
-                ])
+            def add_reports(report_list, report_type):
+                for report in report_list:
+                    local_time = timezone.localtime(report.created_at)
+                    ws.append([
+                        local_time.strftime("%Y-%m-%d"),
+                        local_time.strftime("%I:%M %p"),
+                        report_type,
+                        getattr(report.user, "name", report.user.username),
+                        report.team,
+                        report.department,
+                        report.report_text,
+                        report.status
+                    ])
 
-        # Add both Morning & Evening Reports
-        add_reports(morning_reports, "Morning")
-        add_reports(evening_reports, "Evening")
+            add_reports(morning_reports, "Morning")
+            add_reports(evening_reports, "Evening")
 
-        # Apply text wrap to 'Report' column
-        for row in ws.iter_rows(min_row=2, min_col=7, max_col=7):
-            for cell in row:
-                cell.alignment = Alignment(wrap_text=True, vertical='top')
+            for row in ws.iter_rows(min_row=2, min_col=7, max_col=7):
+                for cell in row:
+                    cell.alignment = Alignment(wrap_text=True, vertical='top')
 
-        # Adjust column widths for readability
-        column_widths = [15, 12, 12, 20, 15, 20, 50, 15]
-        for i, width in enumerate(column_widths, start=1):
-            ws.column_dimensions[ws.cell(row=1, column=i).column_letter].width = width
+            column_widths = [15, 12, 12, 20, 15, 20, 50, 15]
+            for i, width in enumerate(column_widths, start=1):
+                ws.column_dimensions[ws.cell(row=1, column=i).column_letter].width = width
 
-        # Return Excel file as response
-        response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        )
-        response['Content-Disposition'] = 'attachment; filename="team_reports.xlsx"'
-        wb.save(response)
-        return response
+            response = HttpResponse(
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            )
+            response['Content-Disposition'] = 'attachment; filename="team_reports.xlsx"'
+            wb.save(response)
+            return response
 
     return render(request, 'teamlead_reports.html', {
         'morning_reports': morning_reports,
         'evening_reports': evening_reports,
-        'show_all': show_all
+        'show_all': show_all,
     })
+
 def teamlead_project_assigning(request):
     team_lead = get_object_or_404(User, id=request.session["user_id"])
     departments = Department.objects.all()
 
-    # Fetch all users in same team, who are team members
-    # Use __icontains instead of __iexact to avoid case mismatch
     team_members = User.objects.filter(
         team=team_lead.team,
-        job_Position__icontains='team member'
+        job_Position__icontains="team member"
     ).exclude(id=team_lead.id)
 
     if request.method == "POST":
-        ProjectAssign.objects.create(
+        # First create the project without files/images
+        project = ProjectAssign.objects.create(
             team=team_lead.team,
             department_id=request.POST.get("department"),
             assign_to_id=request.POST.get("assign_to"),
@@ -562,12 +556,19 @@ def teamlead_project_assigning(request):
             description=request.POST.get("description"),
             deadline=request.POST.get("deadline"),
             additional_notes=request.POST.get("additional_notes"),
-            upload_file=request.FILES.get("upload_file"),
-            upload_image=request.FILES.get("upload_image"),
             color_preference=request.POST.get("color_preference"),
             content_example=request.POST.get("content_example"),
             priority=request.POST.get("priority"),
         )
+
+        # Handle multiple uploaded files
+        for file in request.FILES.getlist("upload_file[]"):
+            ProjectFile.objects.create(project=project, file=file)
+
+        # Handle multiple uploaded images
+        for image in request.FILES.getlist("upload_image[]"):
+            ProjectImage.objects.create(project=project, image=image)
+
         return redirect("teamlead_project_assigning")
 
     projects = ProjectAssign.objects.filter(team=team_lead.team)
@@ -579,12 +580,11 @@ def teamlead_project_assigning(request):
         "projects": projects,
     })
 
-
 def project_assign_edit(request, pk):
     project = get_object_or_404(ProjectAssign, id=pk)
     departments = Department.objects.all()
     team_members = User.objects.filter(
-        team=project.team, job_Position__iexact='Team Member'
+        team=project.team, job_Position__iexact="Team Member"
     ).exclude(id=project.assigned_by.id)
 
     if request.method == "POST":
@@ -595,22 +595,23 @@ def project_assign_edit(request, pk):
         project.category = request.POST.get("category")
         project.description = request.POST.get("description")
 
-        # ✅ Handle deadline properly
         deadline = request.POST.get("deadline")
         project.deadline = deadline if deadline else None
 
         project.additional_notes = request.POST.get("additional_notes")
-
-        if request.FILES.get("upload_file"):
-            project.upload_file = request.FILES.get("upload_file")
-        if request.FILES.get("upload_image"):
-            project.upload_image = request.FILES.get("upload_image")
-
         project.color_preference = request.POST.get("color_preference")
         project.content_example = request.POST.get("content_example")
         project.priority = request.POST.get("priority")
-
         project.save()
+
+        # ✅ Save new files (without removing old ones)
+        for file in request.FILES.getlist("upload_file[]"):
+            ProjectFile.objects.create(project=project, file=file)
+
+        # ✅ Save new images (without removing old ones)
+        for image in request.FILES.getlist("upload_image[]"):
+            ProjectImage.objects.create(project=project, image=image)
+
         return redirect("teamlead_project_assigning")
 
     return render(request, "teamlead_project_assigning.html", {
@@ -618,7 +619,6 @@ def project_assign_edit(request, pk):
         "departments": departments,
         "team_members": team_members,
     })
-
 
 def project_assign_delete(request, pk):
     project = get_object_or_404(ProjectAssign, id=pk)

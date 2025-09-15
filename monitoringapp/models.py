@@ -215,3 +215,13 @@ class Task(models.Model):
 
     def __str__(self):
         return self.title
+    
+
+
+class ProjectFile(models.Model):
+    project = models.ForeignKey(ProjectAssign, on_delete=models.CASCADE, related_name="files")
+    file = models.FileField(upload_to="project_files/")
+
+class ProjectImage(models.Model):
+    project = models.ForeignKey(ProjectAssign, on_delete=models.CASCADE, related_name="images")
+    image = models.ImageField(upload_to="project_images/")
