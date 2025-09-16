@@ -36,7 +36,7 @@ def index(request):
     return render(request,'index.html')
 
 
-@never_cache  
+@never_cache
 def admin_login(request):
     if request.user.is_authenticated and request.user.is_superuser:
         return redirect('admin_dashboard')
@@ -54,12 +54,11 @@ def admin_login(request):
     return render(request, 'admin_login.html')
 
 def admin_logout(request):
-   
-    request.session.flush()  
-    
-    
-    return redirect("admin_login")
+    request.session.flush()
+    return redirect("index")   # 👈 Redirect to your index page, not admin_login
 
+@never_cache
+@login_required(login_url='admin_login')
 def admin_dashboard(request):
     if request.method == "POST":
         if "add_department" in request.POST:
@@ -77,7 +76,6 @@ def admin_dashboard(request):
     departments = Department.objects.all()
     teams = Team.objects.all()
     return render(request, "admin_dashboard.html", {"departments": departments, "teams": teams})
-
 
 
 
