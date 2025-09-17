@@ -121,9 +121,18 @@ select.status-select:focus {
           <h2 class="font-semibold">{{ task.title }}</h2>
           <p class="text-sm text-gray-400">{{ task.description }}</p>
           <p class="text-xs mt-1">Status: 
-            <span class="font-bold {% if task.status == 'completed' %}text-green-400{% else %}text-yellow-400{% endif %}">
-              {{ task.get_status_display }}
-            </span>
+            <span class="font-bold 
+    {% if task.status == 'completed' %}
+        text-green-400
+    {% elif task.status == 'in_progress' %}
+        text-yellow-400
+    {% else %}
+        text-red-500
+    {% endif %}
+">
+    {{ task.get_status_display }}
+</span>
+
           </p>
         </div>
 
