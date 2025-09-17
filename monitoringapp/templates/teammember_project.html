@@ -65,67 +65,86 @@
           <th class="py-3 px-4">Department</th>
           <th class="py-3 px-4">Deadline</th>
           <th class="py-3 px-4">Priority</th>
+          <th class="py-3 px-4">Status</th>
           <th class="py-3 px-4">Actions</th>
         </tr>
       </thead>
       <tbody>
-  {% for project in projects %}
-  <tr class="border-b border-gray-700">
-    <td class="py-4">{{ project.work_name }}</td>
-    <td class="py-4">{{ project.work_type }}</td>
-    <td class="py-4">{{ project.department.name }}</td>
-    <td class="py-4">{{ project.deadline }}</td>
-    <td class="py-4">{{ project.priority }}</td>
-    <td class="py-4">
-      <button onclick="openProjectModal({{ project.id }})" 
-              class="bg-[#250f1e] text-white px-3 py-1 rounded">View</button>
+        {% for project in projects %}
+        <tr class="border-b border-gray-700">
+          <td class="py-4">{{ project.work_name }}</td>
+          <td class="py-4">{{ project.work_type }}</td>
+          <td class="py-4">{{ project.department.name }}</td>
+          <td class="py-4">{{ project.deadline }}</td>
+          <td class="py-4">{{ project.priority }}</td>
 
-      <div id="project-data-{{ project.id }}" class="hidden mt-2">
-        <div class="my-2">
-          <input type="text" value="{{ project.work_name }}" name="work_name" class="w-full p-2 rounded border">
-        </div>
-        <div class="my-2">
-          <input type="text" value="{{ project.work_type }}" name="work_type" class="w-full p-2 rounded border">
-        </div>
-        <div class="my-2">
-          <input type="text" value="{{ project.category }}" name="category" class="w-full p-2 rounded border">
-        </div>
-        <div class="my-2">
-          <textarea name="description" class="w-full p-2 rounded border">{{ project.description }}</textarea>
-        </div>
-        <div class="my-2">
-          <input type="date" value="{{ project.deadline }}" name="deadline" class="w-full p-2 rounded border">
-        </div>
-        <div class="my-2">
-          <input type="text" value="{{ project.priority }}" name="priority" class="w-full p-2 rounded border">
-        </div>
-        <div class="my-2">
-          <textarea name="additional_notes" class="w-full p-2 rounded border">{{ project.additional_notes }}</textarea>
-        </div>
-        <div class="my-2">
-          <input type="text" value="{{ project.color_preference }}" name="color_preference" class="w-full p-2 rounded border">
-        </div>
-        <div class="my-2">
-          <textarea name="content_example" class="w-full p-2 rounded border">{{ project.content_example }}</textarea>
-        </div>
-        {% if project.upload_file %}
-        <input type="hidden" value="{{ project.upload_file.url }}" name="upload_file">
-        {% endif %}
-        {% if project.upload_image %}
-        <input type="hidden" value="{{ project.upload_image.url }}" name="upload_image">
-        {% endif %}
-      </div>
-    </td>
-  </tr>
-  {% endfor %}
-</tbody>
+          <!-- Status Column -->
+          <td class="py-4">
+            <form method="POST" action="{% url 'update_project_status' project.id %}" class="flex items-center space-x-2">
+              {% csrf_token %}
+              <select name="status" class="p-1 rounded border text-black">
+                {% for value, label in project.STATUS_CHOICES %}
+                  <option value="{{ value }}" {% if project.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="bg-green-600 text-white px-2 py-1 rounded">Update</button>
+            </form>
+          </td>
 
+          <!-- Actions Column -->
+          <td class="py-4">
+            <button onclick="openProjectModal({{ project.id }})" 
+                    class="bg-[#250f1e] text-white px-3 py-1 rounded">
+              View
+            </button>
+
+            <!-- Hidden Project Data (for modal) -->
+            <div id="project-data-{{ project.id }}" class="hidden mt-2">
+              <div class="my-2">
+                <input type="text" value="{{ project.work_name }}" name="work_name" class="w-full p-2 rounded border">
+              </div>
+              <div class="my-2">
+                <input type="text" value="{{ project.work_type }}" name="work_type" class="w-full p-2 rounded border">
+              </div>
+              <div class="my-2">
+                <input type="text" value="{{ project.category }}" name="category" class="w-full p-2 rounded border">
+              </div>
+              <div class="my-2">
+                <textarea name="description" class="w-full p-2 rounded border">{{ project.description }}</textarea>
+              </div>
+              <div class="my-2">
+                <input type="date" value="{{ project.deadline }}" name="deadline" class="w-full p-2 rounded border">
+              </div>
+              <div class="my-2">
+                <input type="text" value="{{ project.priority }}" name="priority" class="w-full p-2 rounded border">
+              </div>
+              <div class="my-2">
+                <textarea name="additional_notes" class="w-full p-2 rounded border">{{ project.additional_notes }}</textarea>
+              </div>
+              <div class="my-2">
+                <input type="text" value="{{ project.color_preference }}" name="color_preference" class="w-full p-2 rounded border">
+              </div>
+              <div class="my-2">
+                <textarea name="content_example" class="w-full p-2 rounded border">{{ project.content_example }}</textarea>
+              </div>
+              {% if project.upload_file %}
+              <input type="hidden" value="{{ project.upload_file.url }}" name="upload_file">
+              {% endif %}
+              {% if project.upload_image %}
+              <input type="hidden" value="{{ project.upload_image.url }}" name="upload_image">
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
   </div>
   {% else %}
     <p>No projects assigned to you yet.</p>
   {% endif %}
 </div>
+
 
 <div id="assignProjectModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
   <div class="bg-[#250f1e] text-white rounded-2xl shadow-lg w-full max-w-3xl p-6 overflow-y-auto max-h-[90vh]">

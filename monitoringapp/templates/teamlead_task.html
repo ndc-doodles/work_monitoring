@@ -77,11 +77,9 @@
 
 <button class="menu-toggle md:hidden fixed top-8 left-4 z-50 text-white p-2 rounded shadow-lg">&#9776;</button>
 
-<!-- Main content -->
 <div class="ml-0 md:ml-64 p-6 max-md:mt-[5rem]">
   <h1 class="text-2xl font-bold mb-4">My Tasks</h1>
 
-  <!-- Add Task Form -->
   <form method="POST" class="mb-6 bg-transparent p-4 rounded">
     {% csrf_token %}
     <input type="text" name="title" placeholder="Task Title" class="w-full p-2 mb-2 rounded text-black border border-white" required>
@@ -89,7 +87,6 @@
     <button type="submit" class="bg-[#6c024d] text-white px-4 py-2 rounded">Add Task</button>
   </form>
 
-  <!-- Task list -->
   <div class="space-y-4">
     {% for task in tasks %}
       <div class="task-item {% if task.status == 'completed' %}completed{% endif %} bg-gray-900 p-4 rounded shadow flex justify-between items-center">
@@ -97,7 +94,7 @@
           <h2 class="font-semibold">{{ task.title }}</h2>
           <p class="text-sm text-gray-400">{{ task.description }}</p>
           <p class="text-xs mt-1">Status: 
-            <span class="font-bold {% if task.status == 'completed' %}text-green-400{% else %}text-yellow-400{% endif %}">{{ task.get_status_display }}</span>
+            <span class="font-bold {% if task.status == 'completed' %}text-green-400{% else %}text-[red]{% endif %}">{{ task.get_status_display }}</span>
           </p>
         </div>
 
@@ -127,7 +124,6 @@
 </div>
 
 
-<!-- Toast container -->
 <div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
 
 <script>

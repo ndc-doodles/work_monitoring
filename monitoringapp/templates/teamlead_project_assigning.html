@@ -216,6 +216,7 @@ select:focus {
           <th class="px-4 py-2 border">Department</th>
           <th class="px-4 py-2 border">Project Name</th>
           <th class="px-4 py-2 border">Assigned To</th>
+          <th class="px-4 py-2 border">Status</th>
           <th class="px-4 py-2 border">Actions</th>
         </tr>
       </thead>
@@ -226,24 +227,33 @@ select:focus {
           <td class="px-4 py-2 border">{{ project.department.name }}</td>
           <td class="px-4 py-2 border">{{ project.work_name }}</td>
           <td class="px-4 py-2 border">{{ project.assign_to.name }}</td>
-         <td class="px-4 py-2 border">
-  <div class="flex flex-nowrap gap-2">
-    <button 
-      onclick="document.getElementById('editModal{{ project.id }}').classList.remove('hidden')" 
-      class="px-3 py-1 bg-blue-600 rounded hover:bg-blue-700 text-white text-sm">
-      Edit
-    </button>
-    <a 
-      href="{% url 'project_assign_delete' project.id %}" 
-      class="px-3 py-1 bg-red-600 rounded hover:bg-red-700 text-white text-sm"
-      onclick="return confirm('Are you sure?')">
-      Delete
-    </a>
-  </div>
-</td>
-
+          <td class="px-4 py-2 border">
+            <span class="px-2 py-1 rounded 
+              {% if project.status == 'Completed' %} bg-green-600 
+              {% elif project.status == 'In Progress' %} bg-yellow-600 
+              {% elif project.status == 'On Hold' %} bg-red-600 
+              {% else %} bg-gray-600 {% endif %}">
+              {{ project.get_status_display }}
+            </span>
+          </td>
+          <td class="px-4 py-2 border">
+            <div class="flex flex-nowrap gap-2">
+              <button 
+                onclick="document.getElementById('editModal{{ project.id }}').classList.remove('hidden')" 
+                class="px-3 py-1 bg-blue-600 rounded hover:bg-blue-700 text-white text-sm">
+                Edit
+              </button>
+              <a 
+                href="{% url 'project_assign_delete' project.id %}" 
+                class="px-3 py-1 bg-red-600 rounded hover:bg-red-700 text-white text-sm"
+                onclick="return confirm('Are you sure?')">
+                Delete
+              </a>
+            </div>
+          </td>
         </tr>
 
+        <!-- ✅ Modal for this project -->
         <div id="editModal{{ project.id }}" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div class="bg-[#250f1e] p-6 rounded-lg w-11/12 md:w-2/3 relative max-h-[90vh] overflow-y-auto">
             
@@ -312,43 +322,40 @@ select:focus {
               </div>
 
               <div>
-  <label class="text-white">Upload File(s)</label>
-  <input type="file" name="upload_file[]" multiple 
-         class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">
-</div>
-{% if project.files.all %}
-  <div class="mt-2 text-white">
-    <p class="font-semibold">Existing Files:</p>
-    <ul class="list-disc ml-6">
-      {% for f in project.files.all %}
-        <li>
-          <a href="{{ f.file.url }}" target="_blank" class="underline text-blue-400">
-            {{ f.file.name|slice:"15:" }} <!-- show filename nicely -->
-          </a>
-        </li>
-      {% endfor %}
-    </ul>
-  </div>
-{% endif %}
+                <label class="text-white">Upload File(s)</label>
+                <input type="file" name="upload_file[]" multiple class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">
+              </div>
+              {% if project.files.all %}
+                <div class="mt-2 text-white">
+                  <p class="font-semibold">Existing Files:</p>
+                  <ul class="list-disc ml-6">
+                    {% for f in project.files.all %}
+                      <li>
+                        <a href="{{ f.file.url }}" target="_blank" class="underline text-blue-400">
+                          {{ f.file.name|slice:"15:" }}
+                        </a>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              {% endif %}
 
-<div>
-  <label class="text-white">Upload Image(s)</label>
-  <input type="file" name="upload_image[]" multiple accept="image/*" 
-         class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">
-</div>
-{% if project.images.all %}
-  <div class="mt-2 text-white">
-    <p class="font-semibold">Existing Images:</p>
-    <div class="flex gap-2 flex-wrap">
-      {% for img in project.images.all %}
-        <div class="w-24 h-24">
-          <img src="{{ img.image.url }}" alt="Project Image"
-               class="w-full h-full object-cover rounded border border-gray-600">
-        </div>
-      {% endfor %}
-    </div>
-  </div>
-{% endif %}
+              <div>
+                <label class="text-white">Upload Image(s)</label>
+                <input type="file" name="upload_image[]" multiple accept="image/*" class="w-full p-2 rounded border border-gray-600 bg-gray-800 text-white">
+              </div>
+              {% if project.images.all %}
+                <div class="mt-2 text-white">
+                  <p class="font-semibold">Existing Images:</p>
+                  <div class="flex gap-2 flex-wrap">
+                    {% for img in project.images.all %}
+                      <div class="w-24 h-24">
+                        <img src="{{ img.image.url }}" alt="Project Image" class="w-full h-full object-cover rounded border border-gray-600">
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
 
               <div>
                 <label class="text-white">Color Preference</label>
@@ -374,6 +381,7 @@ select:focus {
             </form>
           </div>
         </div>
+        <!-- ✅ End Modal -->
 
         {% endfor %}
       </tbody>
@@ -381,6 +389,7 @@ select:focus {
   </div>
 
 </div>
+
 
 
 

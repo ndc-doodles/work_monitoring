@@ -19,6 +19,7 @@ from datetime import time, timedelta
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import localtime, make_aware, is_naive
 from django.views.decorators.cache import never_cache
+from django.utils.cache import add_never_cache_headers
 
 
 
@@ -282,9 +283,10 @@ def login_view(request):
                         return redirect("teammember_dashboard")
 
         except User.DoesNotExist:
-            pass
+            messages.error(request, "Invalid username or password")
 
     return render(request, "user_login.html")
+
 
 
 
@@ -361,17 +363,15 @@ def reset_password(request):
 
 @never_cache
 def teamlead_dashboard(request):
-    # ❌ Redirect if not logged in
+    # Redirect to index if not logged in
     if not request.session.get("user_id") or request.session.get("position") != "team_lead":
-        return redirect("login")
+        return redirect("index")
 
     try:
         team_lead = User.objects.get(id=request.session['user_id'])
     except User.DoesNotExist:
         request.session.flush()
-        return redirect("login")
-
-    team_name = team_lead.team
+        return redirect("index")
 
     # Login time
     login_time_str = request.session.get('login_time')
@@ -389,7 +389,7 @@ def teamlead_dashboard(request):
                 title="Announcement",
                 message=message,
                 created_by=team_lead,
-                created_at=now()
+                created_at=timezone.now()
             )
         return redirect('teamlead_dashboard')
 
@@ -404,7 +404,7 @@ def teamlead_dashboard(request):
     last_login = localtime(last_login_user.last_login_time) if last_login_user else None
 
     # Announcements from last 12 hours
-    cutoff = now() - timedelta(hours=12)
+    cutoff = timezone.now() - timedelta(hours=12)
     announcements = Announcement.objects.filter(
         created_by=team_lead,
         created_at__gte=cutoff
@@ -417,7 +417,7 @@ def teamlead_dashboard(request):
         if member.last_logout_time:
             member.last_logout_time = localtime(member.last_logout_time)
 
-    return render(request, 'teamlead_dashboard.html', {
+    response = render(request, 'teamlead_dashboard.html', {
         'total_users': total_users,
         'active_members': active_members,
         'inactive_members': inactive_members,
@@ -426,6 +426,10 @@ def teamlead_dashboard(request):
         'login_time': login_time,
         'last_login': last_login,
     })
+
+    # 🔒 Block browser from caching this page
+    add_never_cache_headers(response)
+    return response
 
 def is_within_time_range(start_time, end_time, now=None):
     now = now or timezone.localtime().time()
@@ -666,12 +670,36 @@ def project_assign_delete(request, pk):
 
 def teammember_project(request):
     user = get_object_or_404(User, id=request.session.get("user_id"))
-
-    # Only projects assigned to the logged-in user
     projects = ProjectAssign.objects.filter(assign_to=user).order_by("-assigned_date")
 
-    return render(request, "teammember_project.html", {"projects": projects})
+    if request.method == "POST":
+        project_id = request.POST.get("project_id")
+        status = request.POST.get("status")
+        project = get_object_or_404(ProjectAssign, id=project_id, assign_to=user)
+        project.status = status
+        project.save()
+        return redirect("teammember_project")
 
+    return render(request, "teammember_project.html", {"projects": projects})
+def update_project_status(request, pk):
+    user_id = request.session.get("user_id")  
+    if not user_id:
+        messages.error(request, "You must be logged in to update status.")
+        return redirect("index")  # or your login page
+
+    user = get_object_or_404(User, id=user_id)
+    project = get_object_or_404(ProjectAssign, pk=pk, assign_to=user)
+
+    if request.method == "POST":
+        new_status = request.POST.get("status")
+        if new_status in dict(ProjectAssign.STATUS_CHOICES):
+            project.status = new_status
+            project.save()
+            messages.success(request, f"Project status updated to {new_status}")
+        else:
+            messages.error(request, "Invalid status selected.")
+
+    return redirect("teammember_project")
 def teamlead_notepad(request):
     user_id = request.session.get("user_id")
     user = get_object_or_404(User, id=user_id)
@@ -1023,19 +1051,24 @@ def delete_task_teamlead(request, task_id):
     return redirect("teamlead_task")
 
 
-
+@never_cache
 def teamlead_logout(request):
     if "user_id" in request.session:
         try:
             user = User.objects.get(id=request.session["user_id"])
-            user.status = "inactive"   # ✅ Mark user inactive
+            user.status = "inactive"
             user.last_logout_time = timezone.now()
             user.save()
         except User.DoesNotExist:
             pass
 
     request.session.flush()
-    return redirect("login")
+    response = redirect("index")
+    # Extra cache control (forces browser to reload page)
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
 
 
 def teammember_logout(request):

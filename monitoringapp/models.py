@@ -132,19 +132,21 @@ class ProjectAssign(models.Model):
         ("High", "High"),
         ("Urgent", "Urgent"),
     )
+    STATUS_CHOICES = (
+        ("Not Started", "Not Started"),
+        ("In Progress", "In Progress"),
+        ("On Hold", "On Hold"),
+        ("Completed", "Completed"),
+    )
 
-    team = models.ForeignKey("Team", on_delete=models.CASCADE)  # auto-filled
-    department = models.ForeignKey("Department", on_delete=models.CASCADE)  # dropdown
-    assign_to = models.ForeignKey(
-        "User", related_name="assigned_works", on_delete=models.CASCADE
-    )  # only same team members
-    assigned_by = models.ForeignKey(
-        "User", related_name="given_works", on_delete=models.CASCADE
-    )  # the logged-in team lead
-    
+    team = models.ForeignKey("Team", on_delete=models.CASCADE)
+    department = models.ForeignKey("Department", on_delete=models.CASCADE)
+    assign_to = models.ForeignKey("User", related_name="assigned_works", on_delete=models.CASCADE)
+    assigned_by = models.ForeignKey("User", related_name="given_works", on_delete=models.CASCADE)
+
     work_name = models.CharField(max_length=255)
     work_type = models.CharField(max_length=50, choices=WORK_TYPE_CHOICES)
-    category = models.CharField(max_length=255, blank=True, null=True)  # optional
+    category = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     deadline = models.DateField(null=True, blank=True)
     additional_notes = models.TextField(blank=True, null=True)
@@ -158,8 +160,16 @@ class ProjectAssign(models.Model):
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="Medium")
     assigned_date = models.DateField(default=now)
 
+    # NEW FIELD
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="Not Started"
+    )
+
     def __str__(self):
         return f"{self.work_name} → {self.assign_to.name}"
+
     
 
 
