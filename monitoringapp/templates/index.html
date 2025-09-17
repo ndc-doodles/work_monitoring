@@ -32,14 +32,24 @@
 </div>
 
 
-  <div class="flex items-center space-x-4">
-    <a href="{% url 'login' %}"class="hidden md:inline px-5 py-2 bg-[#6c024d] text-white rounded-md hover:bg-[#5c2a4d] transition">
-      Login
-    </a>
-    <button id="menu-toggle" class="md:hidden text-white text-3xl focus:outline-none">
-      ☰
-    </button>
-  </div>
+<div class="flex items-center space-x-4">
+  {% if logged_in_user %}
+<a href="{% if is_team_lead %}{% url 'teamlead_dashboard' %}{% else %}{% url 'teammember_dashboard' %}{% endif %}" 
+   class="hidden md:inline px-5 py-2 bg-[#6c024d] text-white rounded-md hover:bg-[#5c2a4d] transition">
+  👋 {{ logged_in_user.name }}
+</a>
+{% else %}
+<a href="{% url 'login' %}" 
+   class="hidden md:inline px-5 py-2 bg-[#6c024d] text-white rounded-md hover:bg-[#5c2a4d] transition">
+  Login
+</a>
+{% endif %}
+
+  <button id="menu-toggle" class="md:hidden text-white text-3xl focus:outline-none">
+    ☰
+  </button>
+</div>
+
 </nav>
 
 <div id="overlay" class="fixed inset-0 bg-black/50 hidden z-40"></div>
@@ -54,7 +64,16 @@
 <a href="#services" class="mobile-link nav-link text-black hover:text-[#6c024d] transition">Services</a>
 <a href="#faq" class="mobile-link nav-link text-black hover:text-[#6c024d] transition">Faq</a>
 
-    <a href="{% url 'login' %}" class="px-5 py-2 bg-[#6c024d] text-white rounded-md hover:bg-[#5c2a4d] transition">Login</a>
+{% if logged_in_user %}
+  <span class="hidden md:inline text-white font-semibold">
+    👋 {{ logged_in_user.username }}
+  </span>
+{% else %}
+  <a href="{% url 'login' %}" 
+     class="hidden md:inline px-5 py-2 bg-[#6c024d] text-white rounded-md hover:bg-[#5c2a4d] transition">
+    Login
+  </a>
+{% endif %}
   </div>
 </div>
 

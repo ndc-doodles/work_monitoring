@@ -14,6 +14,7 @@ urlpatterns = [
     path('edit-user/', views.edit_user, name='edit_user'),
     path('teammember_project/', views.teammember_project, name='teammember_project'),
     path('project/<int:pk>/update-status/', views.update_project_status, name='update_project_status'),
+    path('api/logged-in-user/', views.get_logged_in_user_api, name='get_logged_in_user_api'),
 
 
     path('teammember_task/update/<int:task_id>/', views.update_task, name='update_task'),

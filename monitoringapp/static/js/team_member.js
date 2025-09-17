@@ -15,46 +15,51 @@
 
 
 
-function openProjectModal(projectId) {
-  const modal = document.getElementById('assignProjectModal');
-  const projectData = document.getElementById(`project-data-${projectId}`);
-  if (!projectData) return;
+function openProjectModal(button) {
+    const modal = document.getElementById("assignProjectModal");
+    modal.classList.remove("hidden");
 
-  // Populate text inputs and textareas
-  const fields = projectData.querySelectorAll('input, textarea');
-  fields.forEach(field => {
-    const name = field.getAttribute('name');
-    const modalField = modal.querySelector(`[name="${name}"]`);
-    if (modalField) {
-      if (modalField.tagName.toLowerCase() === 'textarea') {
-        modalField.textContent = field.value || '';
-      } else {
-        modalField.value = field.value || '';
-      }
+    // Scope all selectors to modal only
+    modal.querySelector("input[name='work_name']").value = button.dataset.work_name || "";
+    modal.querySelector("input[name='work_type']").value = button.dataset.work_type || "";
+    modal.querySelector("input[name='category']").value = button.dataset.category || "";
+    modal.querySelector("textarea[name='description']").value = button.dataset.description || "";
+    modal.querySelector("input[name='deadline']").value = button.dataset.deadline || "";
+    modal.querySelector("textarea[name='additional_notes']").value = button.dataset.additional_notes || "";
+    modal.querySelector("input[name='color_preference']").value = button.dataset.color_preference || "";
+    modal.querySelector("input[name='priority']").value = button.dataset.priority || "";
+    modal.querySelector("textarea[name='content_example']").value = button.dataset.content_example || "";
+
+    // Handle multiple files
+    let filesContainer = modal.querySelector("#existing-files-list");
+    filesContainer.innerHTML = "";
+    if (button.dataset.files) {
+        let files = button.dataset.files.split(",");
+        files.forEach(url => {
+            if (url.trim() !== "") {
+                let link = document.createElement("a");
+                link.href = url;
+                link.target = "_blank";
+                link.className = "text-blue-400 hover:underline block";
+                link.textContent = "📄 View File";
+                filesContainer.appendChild(link);
+            }
+        });
     }
-  });
 
-  // Populate selects
-  const selectNames = ['work_type','priority'];
-  selectNames.forEach(name => {
-    const hiddenField = projectData.querySelector(`[name="${name}"]`);
-    const modalSelect = modal.querySelector(`[name="${name}"]`);
-    if (hiddenField && modalSelect) {
-      const optionExists = Array.from(modalSelect.options).some(o => o.value == hiddenField.value);
-      if(optionExists) modalSelect.value = hiddenField.value;
+    // Handle multiple images
+    let imagesContainer = modal.querySelector("#existing-images-list");
+    imagesContainer.innerHTML = "";
+    if (button.dataset.images) {
+        let images = button.dataset.images.split(",");
+        images.forEach(url => {
+            if (url.trim() !== "") {
+                let img = document.createElement("img");
+                img.src = url;
+                img.className = "w-32 h-32 object-cover rounded border";
+                imagesContainer.appendChild(img);
+            }
+        });
     }
-  });
-
-  // File/Image previews
-  const fileUrl = projectData.querySelector('[name="upload_file"]')?.value;
-  const imageUrl = projectData.querySelector('[name="upload_image"]')?.value;
-
-  const fileLink = modal.querySelector('#existing-file-link');
-  const imagePreview = modal.querySelector('#existing-image-preview');
-
-  if (fileLink) fileLink.href = fileUrl || '#';
-  if (imagePreview) imagePreview.src = imageUrl || '';
-
-  // Show modal
-  modal.classList.remove('hidden');
 }
+

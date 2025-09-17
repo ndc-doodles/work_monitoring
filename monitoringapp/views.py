@@ -21,6 +21,7 @@ from django.utils.timezone import localtime, make_aware, is_naive
 from django.views.decorators.cache import never_cache
 from django.utils.cache import add_never_cache_headers
 
+from django.http import JsonResponse
 
 
 
@@ -247,7 +248,7 @@ def delete_user(request, id):
     user.delete()
     return redirect('admin_usermanagement') 
 
-@never_cache  # Prevent browser caching
+@never_cache
 def login_view(request):
     # If user is already logged in, redirect to dashboard
     if request.session.get("user_id") and request.session.get("position"):
@@ -276,7 +277,7 @@ def login_view(request):
                     request.session["position"] = db_position
                     request.session["login_time"] = str(timezone.now())
 
-                    # Redirect to dashboard
+                    # ✅ Redirect to dashboard to immediately show username in navbar
                     if db_position == "team_lead":
                         return redirect("teamlead_dashboard")
                     else:
@@ -287,6 +288,16 @@ def login_view(request):
 
     return render(request, "user_login.html")
 
+
+   
+def get_logged_in_user_api(request):
+    if request.session.get("user_id"):
+        try:
+            user = User.objects.get(id=request.session["user_id"])
+            return JsonResponse({"name": user.name, "job_position": user.job_Position})
+        except User.DoesNotExist:
+            pass
+    return JsonResponse({"name": None})
 
 
 
@@ -513,23 +524,28 @@ def teammember_dashboard(request):
         'evening_allowed': is_within_time_range(evening_start, evening_end),
         'login_time': login_time,
     })
+@never_cache
 def teamlead_reports(request):
-    team_lead = get_object_or_404(User, id=request.session['user_id'])
+    # ✅ Prevent KeyError if user is logged out
+    if not request.session.get("user_id") or request.session.get("position") != "team_lead":
+        return redirect("index")
+
+    team_lead = get_object_or_404(User, id=request.session["user_id"])
     team_name = team_lead.team
-    show_all = request.GET.get('all') == '1'
+    show_all = request.GET.get("all") == "1"
 
     if show_all:
-        morning_reports = MorningReport.objects.filter(team=team_name).order_by('-created_at')
-        evening_reports = EveningReport.objects.filter(team=team_name).order_by('-created_at')
+        morning_reports = MorningReport.objects.filter(team=team_name).order_by("-created_at")
+        evening_reports = EveningReport.objects.filter(team=team_name).order_by("-created_at")
     else:
         today = date.today()
         morning_reports = MorningReport.objects.filter(team=team_name, created_at__date=today)
         evening_reports = EveningReport.objects.filter(team=team_name, created_at__date=today)
 
-    if 'export' in request.GET:
+    if "export" in request.GET:
         if not morning_reports.exists() and not evening_reports.exists():
-            messages.error(request, "No reports available to export.")  # ✅ Use messages
-            return redirect("teamlead_reports")  # redirect so message clears properly
+            messages.error(request, "No reports available to export.")
+            return redirect("teamlead_reports")
         else:
             wb = Workbook()
             ws = wb.active
@@ -557,26 +573,30 @@ def teamlead_reports(request):
 
             for row in ws.iter_rows(min_row=2, min_col=7, max_col=7):
                 for cell in row:
-                    cell.alignment = Alignment(wrap_text=True, vertical='top')
+                    cell.alignment = Alignment(wrap_text=True, vertical="top")
 
             column_widths = [15, 12, 12, 20, 15, 20, 50, 15]
             for i, width in enumerate(column_widths, start=1):
                 ws.column_dimensions[ws.cell(row=1, column=i).column_letter].width = width
 
             response = HttpResponse(
-                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
-            response['Content-Disposition'] = 'attachment; filename="team_reports.xlsx"'
+            response["Content-Disposition"] = 'attachment; filename="team_reports.xlsx"'
             wb.save(response)
             return response
 
-    return render(request, 'teamlead_reports.html', {
-        'morning_reports': morning_reports,
-        'evening_reports': evening_reports,
-        'show_all': show_all,
+    return render(request, "teamlead_reports.html", {
+        "morning_reports": morning_reports,
+        "evening_reports": evening_reports,
+        "show_all": show_all,
     })
-
+@never_cache
 def teamlead_project_assigning(request):
+    # 🔒 Prevent KeyError: check session before accessing user
+    if not request.session.get("user_id") or request.session.get("position") != "team_lead":
+        return redirect("index")
+
     team_lead = get_object_or_404(User, id=request.session["user_id"])
     departments = Department.objects.all()
 
@@ -667,9 +687,13 @@ def project_assign_delete(request, pk):
     project.delete()
     return redirect("teamlead_project_assigning")
 
-
+@never_cache
 def teammember_project(request):
-    user = get_object_or_404(User, id=request.session.get("user_id"))
+    user_id = request.session.get("user_id")
+    if not user_id:   # if session expired or user logged out
+        return redirect("index")
+
+    user = get_object_or_404(User, id=user_id)
     projects = ProjectAssign.objects.filter(assign_to=user).order_by("-assigned_date")
 
     if request.method == "POST":
@@ -700,8 +724,13 @@ def update_project_status(request, pk):
             messages.error(request, "Invalid status selected.")
 
     return redirect("teammember_project")
+@never_cache
 def teamlead_notepad(request):
+    # 🔒 Prevent access if logged out
     user_id = request.session.get("user_id")
+    if not user_id or request.session.get("position") != "team_lead":
+        return redirect("index")
+
     user = get_object_or_404(User, id=user_id)
 
     # ✅ Only this user's notes
@@ -742,8 +771,15 @@ def teamlead_notepad(request):
     )
 
 
+
+
+@never_cache
 def teammember_notepad(request):
-    user = get_object_or_404(User, id=request.session.get("user_id"))
+    user_id = request.session.get("user_id")
+    if not user_id:   # 🔒 No session → back to index
+        return redirect("index")
+
+    user = get_object_or_404(User, id=user_id)
 
     # All notes for this user
     all_notes = Notepad.objects.filter(user=user).order_by("-updated_at")
@@ -760,7 +796,7 @@ def teammember_notepad(request):
         try:
             note = Notepad.objects.get(id=note_id, user=user)
         except Notepad.DoesNotExist:
-            note = None  # If invalid ID, open new note
+            note = None  # Invalid ID → open new note
 
     if request.method == "POST":
         note_id_post = request.POST.get("note_id")
@@ -784,8 +820,13 @@ def teammember_notepad(request):
 
 
 
+@never_cache
 def teamlead_repository(request):
-    user = get_object_or_404(User, id=request.session.get("user_id"))
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("index")  # or "login_view" if you want login page
+
+    user = get_object_or_404(User, id=user_id)
 
     if request.method == "POST":
         title = request.POST.get("title")
@@ -805,7 +846,14 @@ def teamlead_repository(request):
 
     knowledge_items = Knowledge.objects.filter(department=user.department).order_by("-created_at")
 
-    return render(request, "teamlead_repository.html", {"knowledge_items": knowledge_items})
+    response = render(request, "teamlead_repository.html", {"knowledge_items": knowledge_items})
+    
+    # Extra cache protection
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response["Pragma"] = "no-cache"
+    response["Expires"] = "0"
+    
+    return response
 
 
 def teamlead_repository_delete(request, pk):
@@ -816,10 +864,16 @@ def teamlead_repository_delete(request, pk):
         resource.delete()
         return redirect("teamlead_repository")
 
+from django.shortcuts import redirect, get_object_or_404
+from django.views.decorators.cache import never_cache
 
-
+@never_cache
 def teammember_repository(request):
-    user = get_object_or_404(User, id=request.session.get("user_id"))
+    user_id = request.session.get("user_id")
+    if not user_id:   # 🔒 No session → redirect to index
+        return redirect("index")
+
+    user = get_object_or_404(User, id=user_id)
 
     if request.method == "POST":
         title = request.POST.get("title")
@@ -854,13 +908,18 @@ def teammember_repository_delete(request, pk):
 
 
 
+@never_cache
 def teamlead_profile(request):
-    user = get_object_or_404(User, id=request.session.get("user_id"))
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("index")  # User not logged in, go to index page
+
+    user = get_object_or_404(User, id=user_id)
 
     if request.method == "POST":
         action = request.POST.get("action")
 
-        # ✅ Change Password
+        # Change Password
         if action == "change_password":
             current_password = request.POST.get("current_password")
             new_password = request.POST.get("new_password")
@@ -875,7 +934,7 @@ def teamlead_profile(request):
                 user.save()
                 messages.success(request, "Password changed successfully!")
 
-        # ✅ Edit Profile
+        # Edit Profile
         elif action == "edit_profile":
             user.name = request.POST.get("name")
             user.email = request.POST.get("email")
@@ -890,10 +949,21 @@ def teamlead_profile(request):
 
         return redirect("teamlead_profile")
 
-    return render(request, "teamlead_profile.html", {"user": user})
+    # Render page with cache prevention
+    response = render(request, "teamlead_profile.html", {"user": user})
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response["Pragma"] = "no-cache"
+    response["Expires"] = "0"
+    return response
 
+
+@never_cache
 def teammember_profile(request):
-    user = get_object_or_404(User, id=request.session.get("user_id"))
+    user_id = request.session.get("user_id")
+    if not user_id:   # 🔒 Not logged in → back to index
+        return redirect("index")
+
+    user = get_object_or_404(User, id=user_id)
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -930,16 +1000,16 @@ def teammember_profile(request):
 
     return render(request, "teammember_profile.html", {"user": user})
 
-# TEAM MEMBER TASK LIST & CREATE
+@never_cache
 def teammember_task(request):
     user_id = request.session.get("user_id")
-    if not user_id:
-        return redirect("login_view")
+    if not user_id:   # 🔒 session expired or logged out
+        return redirect("index")   # safer than showing error
 
-    user = User.objects.get(id=user_id)
+    user = get_object_or_404(User, id=user_id)
 
     # ✅ Only tasks created by this logged-in user
-    tasks = Task.objects.filter(created_by=user).order_by('-created_at')
+    tasks = Task.objects.filter(created_by=user).order_by("-created_at")
 
     if request.method == "POST":
         title = request.POST.get("title")
@@ -995,27 +1065,35 @@ def delete_task(request, task_id):
 
 
 
+@never_cache
 def teamlead_task(request):
     user_id = request.session.get("user_id")
     if not user_id:
-        return redirect("login_view")  # redirect if not logged in
+        return redirect("index")  # Redirect to index if not logged in
 
-    user = User.objects.get(id=user_id)
-    # ✅ Only show tasks created by this logged-in user
+    user = get_object_or_404(User, id=user_id)
+
+    # Only show tasks created by this logged-in user
     tasks = Task.objects.filter(created_by=user).order_by('-created_at')
 
     if request.method == "POST":
         title = request.POST.get("title")
         description = request.POST.get("description")
-        Task.objects.create(
-            title=title,
-            description=description,
-            assigned_to=user,   # optional: you can assign to self
-            created_by=user     # track who created the task
-        )
+        if title:  # prevent creating empty tasks
+            Task.objects.create(
+                title=title,
+                description=description,
+                assigned_to=user,
+                created_by=user
+            )
         return redirect("teamlead_task")
 
-    return render(request, 'teamlead_task.html', {"tasks": tasks})
+    # Render page with cache prevention headers
+    response = render(request, 'teamlead_task.html', {"tasks": tasks})
+    response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
 
 
 def update_task_teamlead(request, task_id):
@@ -1050,7 +1128,6 @@ def delete_task_teamlead(request, task_id):
 
     return redirect("teamlead_task")
 
-
 @never_cache
 def teamlead_logout(request):
     if "user_id" in request.session:
@@ -1064,10 +1141,9 @@ def teamlead_logout(request):
 
     request.session.flush()
     response = redirect("index")
-    # Extra cache control (forces browser to reload page)
-    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response['Pragma'] = 'no-cache'
-    response['Expires'] = '0'
+    response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response["Pragma"] = "no-cache"
+    response["Expires"] = "0"
     return response
 
 
@@ -1075,11 +1151,14 @@ def teammember_logout(request):
     if "user_id" in request.session:
         try:
             user = User.objects.get(id=request.session["user_id"])
-            user.status = "inactive"   # ✅ Mark user inactive
+            user.status = "inactive"
             user.last_logout_time = timezone.now()
             user.save()
         except User.DoesNotExist:
             pass
 
+    # ✅ Clear session fully
     request.session.flush()
-    return redirect("login")
+
+    # ✅ Redirect to index (not login page)
+    return redirect("index")
