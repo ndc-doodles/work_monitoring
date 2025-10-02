@@ -248,6 +248,35 @@ def delete_user(request, id):
     user.delete()
     return redirect('admin_usermanagement') 
 
+
+
+def admin_chat(request):
+    users = User.objects.exclude(id=request.user.id)  # company users
+    extra_contacts = ExtraContact.objects.all()       # manually added numbers
+    return render(request, "admin_chat.html", {
+        "users": users,
+        "extra_contacts": extra_contacts
+    })
+
+def add_contact(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        phone = request.POST.get("phone")
+
+        # prevent duplicate phone numbers
+        if ExtraContact.objects.filter(phone=phone).exists():
+            messages.error(request, "Contact with this phone already exists!")
+        else:
+            ExtraContact.objects.create(name=name, phone=phone)
+            messages.success(request, "Contact added successfully!")
+
+        return redirect("admin_chat")  # back to chat page
+
+    return redirect("admin_chat")
+
+
+
+
 @never_cache
 def login_view(request):
     # If user is already logged in, redirect to dashboard
@@ -446,6 +475,60 @@ def is_within_time_range(start_time, end_time, now=None):
     now = now or timezone.localtime().time()
     return start_time <= now <= end_time
 
+
+
+
+
+
+
+def teamlead_chat(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("login_view")
+
+    current_user = User.objects.get(id=user_id)
+
+    # All users
+    users = list(User.objects.all())
+
+    # Reorder: put current_user first
+    users.sort(key=lambda u: 0 if u.id == current_user.id else 1)
+
+    extra_contacts = ExtraContact.objects.all()
+
+    return render(request, 'teamlead_chat.html', {
+        'current_user': current_user,
+        'users': users,
+        'extra_contacts': extra_contacts,
+    })
+
+
+
+
+def teammember_chat(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("login_view")  
+
+    current_user = User.objects.get(id=user_id)
+
+    users = list(User.objects.all())
+    users.sort(key=lambda u: 0 if u.id == current_user.id else 1)
+
+    extra_contacts = ExtraContact.objects.all()
+
+    return render(request, 'teammember_chat.html', {
+        'current_user': current_user,   
+        'users': users,
+        'extra_contacts': extra_contacts,
+        'role': 'teammember',
+    })
+
+
+
+
+
+
 @never_cache
 def teammember_dashboard(request):
     # ❌ Redirect if not logged in
@@ -518,12 +601,34 @@ def teammember_dashboard(request):
             else:
                 messages.error(request, "You can only submit evening reports between 5:00 and 6:15 PM.")
 
+    # ✅ Fetch reports submitted in last 24 hours
+    report_cutoff = now() - timedelta(hours=24)
+
+    morning_reports = MorningReport.objects.filter(
+        user=team_member,
+        created_at__gte=report_cutoff
+    ).values("report_text", "status", "created_at")
+    for r in morning_reports:
+        r["type"] = "Morning"
+
+    evening_reports = EveningReport.objects.filter(
+        user=team_member,
+        created_at__gte=report_cutoff
+    ).values("report_text", "status", "created_at")
+    for r in evening_reports:
+        r["type"] = "Evening"
+
+    all_reports = list(morning_reports) + list(evening_reports)
+    all_reports = sorted(all_reports, key=lambda x: x["created_at"], reverse=True)
+
     return render(request, 'teammember_dashboard.html', {
         'announcements': announcements,
         'morning_allowed': is_within_time_range(morning_start, morning_end),
         'evening_allowed': is_within_time_range(evening_start, evening_end),
         'login_time': login_time,
+        'all_reports': all_reports,  # ✅ send to template
     })
+
 @never_cache
 def teamlead_reports(request):
     # ✅ Prevent KeyError if user is logged out
@@ -1088,7 +1193,6 @@ def teamlead_task(request):
             )
         return redirect("teamlead_task")
 
-    # Render page with cache prevention headers
     response = render(request, 'teamlead_task.html', {"tasks": tasks})
     response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     response['Pragma'] = 'no-cache'

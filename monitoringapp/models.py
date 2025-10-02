@@ -235,3 +235,31 @@ class ProjectFile(models.Model):
 class ProjectImage(models.Model):
     project = models.ForeignKey(ProjectAssign, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(upload_to="project_images/")
+
+# models.py
+class ExtraContact(models.Model):
+    name = models.CharField(max_length=150)
+    phone = models.CharField(max_length=15, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.phone})"
+
+
+class ChatRoom(models.Model):
+    name = models.CharField(max_length=255, blank=True, null=True)
+    is_group = models.BooleanField(default=False)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_rooms')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+class ChatMessage(models.Model):
+    room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name="messages")
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.sender} - {self.message[:20]}"

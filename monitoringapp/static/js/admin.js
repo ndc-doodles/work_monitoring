@@ -76,3 +76,77 @@ const passwordInput = document.getElementById('password');
               d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>`;
     }
   });
+
+
+
+
+
+  function openModal() {
+    const modal = document.getElementById("addContactModal");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+  }
+
+  function closeModal() {
+    const modal = document.getElementById("addContactModal");
+    modal.classList.remove("flex");
+    modal.classList.add("hidden");
+  }
+
+
+
+let socket = null;
+  let currentChatId = null;
+
+  function openChat(userId, username, phone, avatar) {
+    // Show chat window
+    document.getElementById("empty-chat").classList.add("hidden");
+    document.getElementById("chat-window").classList.remove("hidden");
+
+    // Update chat header
+    document.getElementById("chat-username").innerText = username;
+    document.getElementById("chat-userphone").innerText = phone;
+    document.getElementById("chat-avatar").src = avatar || "{% static 'images/default.png' %}";
+
+    currentChatId = userId;
+
+    // Close old socket if exists
+    if (socket) socket.close();
+
+    // Open new WebSocket
+    socket = new WebSocket(`ws://${window.location.host}/ws/chat/${userId}/`);
+
+    socket.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      displayMessage(data.message, data.sender);
+    };
+  }
+
+  function sendMessage() {
+    const input = document.getElementById("chat-input");
+    const msg = input.value.trim();
+    if (msg && socket) {
+      socket.send(JSON.stringify({
+        message: msg,
+        sender: "{{ current_user.name }}",
+        chat_id: currentChatId
+      }));
+      input.value = "";
+    }
+  }
+
+  function displayMessage(message, sender) {
+    const container = document.getElementById("chat-messages");
+    const div = document.createElement("div");
+    div.classList.add("p-2", "rounded-lg", "max-w-xs");
+
+    if (sender === "{{ current_user.name }}") {
+      div.classList.add("bg-green-500", "text-white", "ml-auto");
+    } else {
+      div.classList.add("bg-gray-700", "text-white", "mr-auto");
+    }
+
+    div.innerText = message;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight; // auto scroll
+  }

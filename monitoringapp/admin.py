@@ -13,6 +13,7 @@ admin.site.register(Knowledge)
 admin.site.register(Task)
 admin.site.register(ProjectFile)
 admin.site.register(ProjectImage)
+admin.site.register(ExtraContact)
 
 
 

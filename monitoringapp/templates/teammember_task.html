@@ -81,7 +81,10 @@ select.status-select:focus {
         <a href="{% url 'teammember_profile' %}" class="block py-2 px-4 rounded hover:bg-white hover:text-black">Profile</a>
       </li>
       <li>
-        <a href="{% url 'teammember_task' %}" class="block py-2 px-4 rounded bg-white text-black">My task</a>
+        <a href="{% url 'teammember_task' %}" class="block py-2 px-4 rounded hover:bg-white hover:text-black">My task</a>
+      </li>
+      <li>
+        <a href="{% url 'teammember_chat' %}" class="block py-2 px-4 rounded hover:bg-white hover:text-black">Chat</a>
       </li>
       <a href="{% url 'teammember_logout' %}" 
        class="block py-2 px-4 rounded bg-red-600 text-white">
