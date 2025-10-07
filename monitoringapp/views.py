@@ -501,7 +501,7 @@ def teamlead_chat(request):
         'users': users,
         'extra_contacts': extra_contacts,
     })
-    
+
 
 
 
@@ -513,13 +513,13 @@ def teammember_chat(request):
 
     current_user = User.objects.get(id=user_id)
 
-    users = list(User.objects.all())
-    users.sort(key=lambda u: 0 if u.id == current_user.id else 1)
+    users = list(User.objects.exclude(id=user_id))  # Other users
+    users.insert(0, current_user)  # Current user on top
 
     extra_contacts = ExtraContact.objects.all()
 
     return render(request, 'teammember_chat.html', {
-        'current_user': current_user,   
+        'current_user': current_user,
         'users': users,
         'extra_contacts': extra_contacts,
         'role': 'teammember',

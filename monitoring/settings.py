@@ -61,6 +61,7 @@ TEMPLATES = [
     },
 ]
 
+
 # settings.py
 
 ASGI_APPLICATION = "monitoring.asgi.application"

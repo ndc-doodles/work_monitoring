@@ -61,7 +61,6 @@
 </button>
 
 
-
 <!-- Main Chat Layout -->
 <div class="flex h-screen bg-gray-100 ml-64">
 
@@ -70,7 +69,6 @@
     <!-- Header -->
     <div class="flex items-center justify-between p-4 border-b border-gray-700">
       <h2 class="font-bold text-lg">Chats</h2>
-      
     </div>
 
     <!-- Search -->
@@ -82,63 +80,45 @@
 
     <!-- Dynamic User List -->
     <div id="user-list" class="flex-1 overflow-y-auto">
-   
-{% for user in users %}
-  <div onclick="openChat('{{ user.id }}',
-                          '{% if user.id == current_user.id %}Me{% else %}{{ user.name }}{% endif %}',
-                          '{{ user.phone }}',
-                          '{% if user.profile_image %}{{ user.profile_image.url }}{% endif %}')"
-       class="p-3 flex items-center hover:bg-[#202c33] cursor-pointer">
-
-    {% if user.profile_image %}
-      <img src="{{ user.profile_image.url }}" class="w-10 h-10 rounded-full mr-3" />
-    {% else %}
-      <div class="w-10 h-10 rounded-full flex items-center justify-center text-white border border-white font-bold mr-3"
-           style="background-color: hsl({{ user.id|add:50|divisibleby:360 }}, 70%, 50%)">
-        {% if user.id == current_user.id %}
-          M
+      {% for user in users %}
+      <div class="user-card p-3 flex items-center hover:bg-[#202c33] cursor-pointer"
+           data-id="{{ user.id }}"
+           data-name="{% if user.id == current_user.id %}Me{% else %}{{ user.name|escape }}{% endif %}"
+           data-phone="{{ user.phone|default:''|escape }}"
+           data-avatar="{% if user.profile_image %}{{ user.profile_image.url|escape }}{% else %}{% static 'images/default.png' %}{% endif %}">
+        {% if user.profile_image %}
+          <img src="{{ user.profile_image.url }}" class="w-10 h-10 rounded-full mr-3" />
         {% else %}
-          {{ user.name|first|upper }}
-        {% endif %}
-      </div>
-    {% endif %}
-
-    <div>
-      {% if user.id == current_user.id %}
-        <p class="font-medium">Me</p>
-        <p class="text-gray-400 text-sm">{{ user.phone }}</p>
-      {% else %}
-        <p class="font-medium">{{ user.name }}</p>
-        <p class="text-gray-400 text-sm">{{ user.phone }}</p>
-      {% endif %}
-    </div>
-
-  </div>
-{% endfor %}
-
-
-
-      <!-- Extra Contacts -->
-      {% for contact in extra_contacts %}
-        <div onclick="openChat('extra-{{ contact.id }}','{{ contact.name }}','{{ contact.phone }}','{% if contact.profile_image %}{{ contact.profile_image.url }}{% endif %}')"
-             class="p-3 flex items-center hover:bg-[#202c33] cursor-pointer">
-
-          {% if contact.profile_image %}
-            <img src="{{ contact.profile_image.url }}" class="w-10 h-10 rounded-full mr-3" />
-          {% else %}
-            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white border border-white font-bold mr-3"
-                 style="background-color: hsl({{ contact.id|add:50|divisibleby:360 }}, 70%, 50%)">
-              {{ contact.name|first|upper }}
-            </div>
-          {% endif %}
-
-          <div>
-            <p class="font-medium">{{ contact.name }}</p>
-            <p class="text-gray-400 text-sm">{{ contact.phone }}</p>
+          <div class="w-10 h-10 rounded-full flex items-center justify-center text-white border border-white font-bold mr-3">
+            {% if user.id == current_user.id %}M{% else %}{{ user.name|first|upper }}{% endif %}
           </div>
+        {% endif %}
+        <div>
+          <p class="font-medium">{% if user.id == current_user.id %}Me{% else %}{{ user.name }}{% endif %}</p>
+          <p class="text-gray-400 text-sm">{{ user.phone }}</p>
         </div>
+      </div>
       {% endfor %}
 
+      {% for contact in extra_contacts %}
+      <div class="user-card p-3 flex items-center hover:bg-[#202c33] cursor-pointer"
+           data-id="extra-{{ contact.id }}"
+           data-name="{{ contact.name }}"
+           data-phone="{{ contact.phone }}"
+           data-avatar="{% if contact.profile_image %}{{ contact.profile_image.url }}{% else %}{% static 'images/default.png' %}{% endif %}">
+        {% if contact.profile_image %}
+          <img src="{{ contact.profile_image.url }}" class="w-10 h-10 rounded-full mr-3" />
+        {% else %}
+          <div class="w-10 h-10 rounded-full flex items-center justify-center text-white border border-white font-bold mr-3">
+            {{ contact.name|first|upper }}
+          </div>
+        {% endif %}
+        <div>
+          <p class="font-medium">{{ contact.name }}</p>
+          <p class="text-gray-400 text-sm">{{ contact.phone }}</p>
+        </div>
+      </div>
+      {% endfor %}
     </div>
   </div>
 
@@ -148,7 +128,7 @@
   </div>
 
   <!-- Right Side: Chat Window -->
-  <div id="chat-window" class="flex-1 flex flex-col hidden">
+  <div id="chat-window" class="flex-1 flex flex-col hidden relative">
     <!-- Chat Header -->
     <div class="flex items-center justify-between p-4 bg-[#202c33] text-white">
       <div class="flex items-center">
@@ -159,13 +139,15 @@
         </div>
       </div>
       <div class="flex space-x-4">
-        <button class="hover:text-green-400">
-          <!-- Call Icon -->
+        <!-- Voice Call Button -->
+        <button id="voice-call-btn" class="hover:text-green-400 p-2 rounded-full transition">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#fff" d="M19.95 21q-3.125 0-6.175-1.362t-5.55-3.863t-3.862-5.55T3 4.05q0-.45.3-.75t.75-.3H8.1q.35 0 .625.238t.325.562l.65 3.5q.05.4-.025.675T9.4 8.45L6.975 10.9q.5.925 1.187 1.787t1.513 1.663q.775.775 1.625 1.438T13.1 17l2.35-2.35q.225-.225.588-.337t.712-.063l3.45.7q.35.1.575.363T21 15.9v4.05q0 .45-.3.75t-.75.3"/></svg>
         </button>
-        <button class="hover:text-blue-400">
-          <!-- Video Icon -->
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="m15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14zM3 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <!-- Video Call Button -->
+        <button id="video-call-btn" class="hover:text-blue-400 p-2 rounded-full transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M4 6h8a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z"/>
+          </svg>
         </button>
       </div>
     </div>
@@ -180,16 +162,185 @@
              class="flex-1 px-3 py-2 rounded-full bg-[#111b21] text-white border-none focus:ring-0 text-sm" />
       <button onclick="sendMessage()" class="ml-3 bg-green-500 px-4 py-2 rounded-full text-white">Send</button>
     </div>
+
+    <!-- Video Elements -->
+    <video id="localVideo" autoplay muted class="hidden w-64 h-48 rounded absolute top-16 right-16 border border-gray-300 z-50"></video>
+    <video id="remoteVideo" autoplay class="hidden w-64 h-48 rounded absolute top-16 right-16 border border-gray-300 z-40"></video>
   </div>
 </div>
 
-
-
 <script>
-  window.SERVER_CURRENT_USER_ID = "{{ current_user.id }}";
-  window.SERVER_CURRENT_USER_NAME = "{{ current_user.name }}";
-  window.role = "{{ role|default:'teammember' }}";  /* optional */
+// ================================
+// Globals
+// ================================
+window.SERVER_CURRENT_USER_ID = "{{ current_user.id }}";
+window.currentChatId = null;
+
+let localStream;
+let peerConnection;
+const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+
+// ================================
+// Open Chat
+// ================================
+function openChat(userId, username, phone, avatar) {
+  document.getElementById("empty-chat").classList.add("hidden");
+  document.getElementById("chat-window").classList.remove("hidden");
+
+  document.getElementById("chat-username").textContent = username || "Unknown";
+  document.getElementById("chat-userphone").textContent = phone || "";
+  document.getElementById("chat-avatar").src = avatar && avatar.trim() !== "" 
+      ? avatar 
+      : "{% static 'images/default.png' %}";
+
+  const chatMessages = document.getElementById("chat-messages");
+  chatMessages.innerHTML = `<div class="text-gray-400 text-sm">You are now chatting with <b>${username}</b>.</div>`;
+
+  document.querySelectorAll('.user-card').forEach(card => card.classList.remove('bg-[#202c33]'));
+  const selected = Array.from(document.querySelectorAll('.user-card'))
+                        .find(c => c.dataset.id === userId);
+  if(selected) selected.classList.add('bg-[#202c33]');
+
+  window.currentChatId = userId;
+}
+
+// ================================
+// Send Message
+// ================================
+function sendMessage() {
+  const input = document.getElementById("chat-input");
+  const text = input.value.trim();
+  if (!text || !window.currentChatId) return;
+
+  const chatMessages = document.getElementById("chat-messages");
+  const msg = document.createElement("div");
+  msg.className = "flex justify-end";
+  msg.innerHTML = `<div class='bg-green-600 text-white px-3 py-2 rounded-lg max-w-xs'>${text}</div>`;
+  chatMessages.appendChild(msg);
+
+  input.value = "";
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+document.getElementById("chat-input").addEventListener("keydown", function(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// ================================
+// User card click
+// ================================
+document.querySelectorAll('.user-card').forEach(card => {
+  card.addEventListener('click', () => {
+    openChat(
+      card.dataset.id,
+      card.dataset.name,
+      card.dataset.phone,
+      card.dataset.avatar
+    );
+  });
+});
+
+// ================================
+// Filter Users
+// ================================
+function filterUsers(search) {
+  const term = search.toLowerCase();
+  document.querySelectorAll('#user-list .user-card').forEach(card => {
+    const name = card.dataset.name.toLowerCase();
+    const phone = card.dataset.phone.toLowerCase();
+    card.style.display = (name.includes(term) || phone.includes(term)) ? 'flex' : 'none';
+  });
+}
+
+// ================================
+// WebRTC + Calls
+// ================================
+const ws = new WebSocket("ws://" + window.location.host + "/ws/chat/");
+
+ws.onmessage = async (e) => {
+  const data = JSON.parse(e.data);
+  const event = data.event;
+  if(event === "offer" && data.receiver == SERVER_CURRENT_USER_ID){
+    await startCall(false, data.video, data);
+  } else if(event === "answer" && data.receiver == SERVER_CURRENT_USER_ID){
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+  } else if(event === "candidate" && data.receiver == SERVER_CURRENT_USER_ID){
+    try { await peerConnection.addIceCandidate(data.candidate); } catch(e){console.log(e);}
+  }
+};
+
+// ================================
+// Start Call Function
+// ================================
+async function startCall(isCaller, isVideo = true, data = null) {
+  localStream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true });
+
+  const localVideoEl = document.getElementById("localVideo");
+  const remoteVideoEl = document.getElementById("remoteVideo");
+
+  if (isVideo) {
+    localVideoEl.srcObject = localStream;
+    localVideoEl.classList.remove("hidden");
+    remoteVideoEl.classList.remove("hidden");
+  } else {
+    localVideoEl.classList.add("hidden");
+    remoteVideoEl.classList.add("hidden");
+  }
+
+  peerConnection = new RTCPeerConnection(config);
+  localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+  peerConnection.ontrack = (event) => {
+    remoteVideoEl.srcObject = event.streams[0];
+  };
+
+  peerConnection.onicecandidate = (event) => {
+    if(event.candidate){
+      ws.send(JSON.stringify({
+        event: "candidate",
+        candidate: event.candidate,
+        sender: SERVER_CURRENT_USER_ID,
+        receiver: window.currentChatId
+      }));
+    }
+  };
+
+  if(isCaller){
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    ws.send(JSON.stringify({
+      event: "offer",
+      sdp: offer,
+      video: isVideo,
+      sender: SERVER_CURRENT_USER_ID,
+      receiver: window.currentChatId
+    }));
+  } else if(data) {
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+    ws.send(JSON.stringify({
+      event: "answer",
+      sdp: answer,
+      video: isVideo,
+      sender: SERVER_CURRENT_USER_ID,
+      receiver: data.sender
+    }));
+  }
+}
+
+// ================================
+// Call Buttons
+// ================================
+document.getElementById("voice-call-btn").onclick = () => startCall(true, false);
+document.getElementById("video-call-btn").onclick = () => startCall(true, true);
 </script>
+
+
+
 
 
 
