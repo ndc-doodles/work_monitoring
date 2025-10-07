@@ -41,84 +41,77 @@
 
 <button class="menu-toggle md:hidden fixed top-8 left-4 z-50 text-white p-2 rounded shadow-lg">&#9776;</button>
 
-
 <!-- Main Chat Layout -->
-<div class="flex h-screen bg-gray-100 ml-64">
+<div class="flex h-screen">
 
   <!-- Left Chat List -->
-  <div class="w-80 bg-[#111b21] text-white flex flex-col">
+  <div class="w-80 bg-[#111b21] text-white flex flex-col ml-64">
     <!-- Header -->
     <div class="flex items-center justify-between p-4 border-b border-gray-700">
       <h2 class="font-bold text-lg">Chats</h2>
-<button onclick="openModal()" class="p-2 rounded-full hover:bg-gray-700">
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-    <path d="M12 5v14M5 12h14" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-</button>
-
+      <button id="addContactBtn" class="p-2 rounded-full hover:bg-gray-700">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </div>
 
     <!-- Search -->
     <div class="p-2">
-      <input type="text" placeholder="Search or start new chat"
-             onkeyup="filterUsers(this.value)"
+      <input type="text" placeholder="Search or start new chat" id="userSearch"
              class="w-full px-3 py-2 rounded bg-[#202c33] text-sm text-white placeholder-gray-400 border-none focus:ring-0" />
     </div>
 
     <!-- Dynamic User List -->
     <div id="user-list" class="flex-1 overflow-y-auto">
-
-{% for user in users %}
-  <div onclick="openChat('{{ user.id }}','{{ user.name }}','{{ user.phone }}','{% if user.profile_image %}{{ user.profile_image.url }}{% endif %}')"
-       class="p-3 flex items-center hover:bg-[#202c33] cursor-pointer">
-
-    {% if user.profile_image %}
-      <img src="{{ user.profile_image.url }}" class="w-10 h-10 rounded-full mr-3" />
-    {% else %}
-      <div class="w-10 h-10 rounded-full flex items-center justify-center text-white border border-white font-bold mr-3"
-           style="background-color: hsl({{ user.id|add:50|divisibleby:360 }}, 70%, 50%)">
-        {{ user.name|first|upper }}
+      {% for user in users %}
+      <div class="user-card p-3 flex items-center hover:bg-[#202c33] cursor-pointer"
+           data-id="{{ user.id }}"
+           data-name="{{ user.name }}"
+           data-phone="{{ user.phone }}"
+           data-avatar="{% if user.profile_image %}{{ user.profile_image.url }}{% endif %}">
+        {% if user.profile_image %}
+          <img src="{{ user.profile_image.url }}" class="w-10 h-10 rounded-full mr-3" />
+        {% else %}
+          <div class="w-10 h-10 rounded-full flex items-center justify-center text-white border border-white font-bold mr-3"
+               style="background-color: hsl({{ user.id|add:50|divisibleby:360 }}, 70%, 50%)">
+            {{ user.name|first|upper }}
+          </div>
+        {% endif %}
+        <div>
+          {% if user.id == current_user.id %}
+            <p class="font-medium">Me</p>
+            <p class="text-gray-400 text-sm">{{ user.phone }}</p>
+          {% else %}
+            <p class="font-medium">{{ user.name }}</p>
+            <p class="text-gray-400 text-sm">{{ user.phone }}</p>
+          {% endif %}
+        </div>
       </div>
-    {% endif %}
+      {% endfor %}
 
-    <div>
-  {% if user.id == current_user.id %}
-    <p class="font-medium">Me</p>
-    <p class="text-gray-400 text-sm">{{ user.phone }}</p>
-  {% else %}
-    <p class="font-medium">{{ user.name }}</p>
-    <p class="text-gray-400 text-sm">{{ user.phone }}</p>
-  {% endif %}
-</div>
-
-  </div>
-{% endfor %}
-
-
-<!-- Extra Contacts -->
-{% for contact in extra_contacts %}
-  <div onclick="openChat('extra-{{ contact.id }}','{{ contact.name }}','{{ contact.phone }}','{% if contact.profile_image %}{{ contact.profile_image.url }}{% else %}{% static 'images/default.png' %}{% endif %}')"
-       class="p-3 flex items-center hover:bg-[#202c33] cursor-pointer">
-
-    {% if contact.profile_image %}
-      <img src="{{ contact.profile_image.url }}" class="w-10 h-10 rounded-full mr-3" />
-    {% else %}
-      <div class="w-10 h-10 rounded-full flex items-center justify-center text-white border border-white font-bold mr-3"
-           style="background-color: hsl({{ contact.id|add:50|divisibleby:360 }}, 70%, 50%)">
-        {{ contact.name|first|upper }}
+      <!-- Extra Contacts -->
+      {% for contact in extra_contacts %}
+      <div class="user-card p-3 flex items-center hover:bg-[#202c33] cursor-pointer"
+           data-id="extra-{{ contact.id }}"
+           data-name="{{ contact.name }}"
+           data-phone="{{ contact.phone }}"
+           data-avatar="{% if contact.profile_image %}{{ contact.profile_image.url }}{% else %}{% static 'images/default.png' %}{% endif %}">
+        {% if contact.profile_image %}
+          <img src="{{ contact.profile_image.url }}" class="w-10 h-10 rounded-full mr-3" />
+        {% else %}
+          <div class="w-10 h-10 rounded-full flex items-center justify-center text-white border border-white font-bold mr-3"
+               style="background-color: hsl({{ contact.id|add:50|divisibleby:360 }}, 70%, 50%)">
+            {{ contact.name|first|upper }}
+          </div>
+        {% endif %}
+        <div>
+          <p class="font-medium">{{ contact.name }}</p>
+          <p class="text-gray-400 text-sm">{{ contact.phone }}</p>
+        </div>
       </div>
-    {% endif %}
-
-    <div>
-      <p class="font-medium">{{ contact.name }}</p>
-      <p class="text-gray-400 text-sm">{{ contact.phone }}</p>
+      {% endfor %}
     </div>
-  </div>
-{% endfor %}
-
-
-</div>
-
   </div>
 
   <!-- Right Side: Empty State -->
@@ -138,23 +131,29 @@
         </div>
       </div>
       <div class="flex space-x-4">
-        <button class="hover:text-green-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="#fff" d="M19.95 21q-3.125 0-6.175-1.362t-5.55-3.863t-3.862-5.55T3 4.05q0-.45.3-.75t.75-.3H8.1q.35 0 .625.238t.325.562l.65 3.5q.05.4-.025.675T9.4 8.45L6.975 10.9q.5.925 1.187 1.787t1.513 1.663q.775.775 1.625 1.438T13.1 17l2.35-2.35q.225-.225.588-.337t.712-.063l3.45.7q.35.1.575.363T21 15.9v4.05q0 .45-.3.75t-.75.3"/></svg></button>
-        <button class="hover:text-blue-400"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="m15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14zM3 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
+        <button onclick="startCall(false)" class="hover:text-green-400">Voice</button>
+        <button onclick="startCall(true)" class="hover:text-blue-400">Video</button>
       </div>
     </div>
 
-    <!-- Messages -->
+    <!-- Chat Messages -->
     <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-[#0b141a]"></div>
+
+    <!-- Video container -->
+    <div id="video-container" class="flex space-x-4 p-4 bg-black hidden">
+      <video id="localVideo" autoplay muted playsinline class="w-1/2 rounded-lg"></video>
+      <video id="remoteVideo" autoplay playsinline class="w-1/2 rounded-lg"></video>
+    </div>
 
     <!-- Input -->
     <div class="p-4 bg-[#202c33] flex items-center">
-      <input id="chat-input" type="text"
-             placeholder="Type a message"
+      <input id="chat-input" type="text" placeholder="Type a message"
              class="flex-1 px-3 py-2 rounded-full bg-[#111b21] text-white border-none focus:ring-0 text-sm" />
-      <button onclick="sendMessage()" class="ml-3 bg-green-500 px-4 py-2 rounded-full text-white">Send</button>
+      <button id="sendMsgBtn" class="ml-3 bg-green-500 px-4 py-2 rounded-full text-white">Send</button>
     </div>
   </div>
 </div>
+
 <!-- Add Contact Modal -->
 <div id="addContactModal" class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-50 z-50">
   <div class="bg-black rounded-lg shadow-lg w-96 p-6 border border-white">
@@ -163,32 +162,256 @@
       {% csrf_token %}
       <div class="mb-3">
         <label class="block text-sm font-medium text-gray-600">Name</label>
-        <input type="text" name="name" required
-               class="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-green-300 "/>
+        <input type="text" name="name" required class="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-green-300"/>
       </div>
       <div class="mb-3">
         <label class="block text-sm font-medium text-gray-600">Phone</label>
-        <input type="text" name="phone" required
-               class="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-green-300"/>
+        <input type="text" name="phone" required class="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-green-300"/>
       </div>
       <div class="flex justify-end space-x-3">
-        <button type="button" onclick="closeModal()"
-                class="px-4 py-2 rounded bg-gray-400 text-white">Cancel</button>
-        <button type="submit"
-                class="px-4 py-2 rounded bg-green-500 text-white">Save</button>
+        <button type="button" id="closeModalBtn" class="px-4 py-2 rounded bg-gray-400 text-white">Cancel</button>
+        <button type="submit" class="px-4 py-2 rounded bg-green-500 text-white">Save</button>
       </div>
     </form>
   </div>
 </div>
 
-
-
 <script>
-  const role = "{{ request.user.designation|lower|cut:' ' }}"; 
-  // Example: "Team Lead" -> "teamlead"
+  // ==============================
+  // GLOBAL VARIABLES
+  // ==============================
+  let socket = null;
+  let currentChatEmail = null;
+  let peerConnection;
+  let localStream;
+
+  const userEmail = "{{ current_user.email }}";  // current logged-in user's email
+
+  const rtcConfig = {
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      // optional TURN server for production
+      // { urls: "turn:relay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+    ],
+  };
+
+  // ==============================
+  // OPEN CHAT
+  // ==============================
+  window.openChat = function(email, username, avatar) {
+    // UI toggle
+    document.getElementById("empty-chat").classList.add("hidden");
+    document.getElementById("chat-window").classList.remove("hidden");
+    document.getElementById("chat-username").innerText = username;
+    document.getElementById("chat-avatar").src = avatar || "{% static 'images/default.png' %}";
+    currentChatEmail = email;
+
+    // close previous socket
+    if (socket) socket.close();
+
+    // open new socket connection
+    socket = new WebSocket(`wss://${window.location.host}/ws/chat/${userEmail}/`);
+
+    socket.onopen = () => console.log("✅ Connected to WebSocket");
+
+    socket.onmessage = async (event) => {
+      const data = JSON.parse(event.data);
+      const action = data.action;
+
+      switch (action) {
+        case "message":
+          displayMessage(data.message, data.from);
+          break;
+        case "offer":
+          await handleOffer(data);
+          break;
+        case "answer":
+          await peerConnection.setRemoteDescription({ type: "answer", sdp: data.sdp });
+          break;
+        case "candidate":
+          if (data.candidate) {
+            try {
+              await peerConnection.addIceCandidate(data.candidate);
+            } catch (err) {
+              console.error("❌ ICE candidate error:", err);
+            }
+          }
+          break;
+        case "incoming_call":
+          if (confirm(`${data.from} is calling you. Accept?`)) {
+            startCall(data.from, true);
+          }
+          break;
+      }
+    };
+
+    socket.onclose = () => console.log("🔴 WebSocket closed");
+  };
+
+  // ==============================
+  // SEND MESSAGE
+  // ==============================
+  document.getElementById('sendMsgBtn').addEventListener('click', sendMessage);
+
+  function sendMessage() {
+    const input = document.getElementById("chat-input");
+    const msg = input.value.trim();
+    if (!msg || !socket) return;
+
+    const payload = {
+      action: "message",
+      message: msg,
+      from: userEmail,
+      target: currentChatEmail,
+    };
+
+    socket.send(JSON.stringify(payload));
+    displayMessage(msg, userEmail);
+    input.value = "";
+  }
+
+  // ==============================
+  // DISPLAY MESSAGE
+  // ==============================
+  function displayMessage(message, sender) {
+    const container = document.getElementById("chat-messages");
+    const div = document.createElement("div");
+    div.classList.add("p-2", "rounded-lg", "max-w-xs");
+
+    if (sender === userEmail) {
+      div.classList.add("bg-green-500", "text-white", "ml-auto");
+    } else {
+      div.classList.add("bg-gray-700", "text-white", "mr-auto");
+    }
+
+    div.innerText = message;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  // ==============================
+  // ATTACH EVENTS TO USER CARDS
+  // ==============================
+  document.querySelectorAll('.user-card').forEach(card => {
+    card.addEventListener('click', () => {
+      openChat(card.dataset.email, card.dataset.name, card.dataset.avatar);
+    });
+  });
+
+  // ==============================
+  // ADD CONTACT MODAL
+  // ==============================
+  document.getElementById('addContactBtn').addEventListener('click', () => {
+    document.getElementById('addContactModal').classList.remove('hidden');
+  });
+
+  document.getElementById('closeModalBtn').addEventListener('click', () => {
+    document.getElementById('addContactModal').classList.add('hidden');
+  });
+
+  // ==============================
+  // WEBRTC CALL HANDLING
+  // ==============================
+  async function startCall(targetEmail, isAnswer = false, withVideo = false) {
+    document.getElementById("video-container").classList.remove("hidden");
+
+    // Get audio/video
+    localStream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: withVideo
+    });
+    document.getElementById("localVideo").srcObject = localStream;
+
+    // Create RTCPeerConnection
+    peerConnection = new RTCPeerConnection(rtcConfig);
+
+    // Add local tracks
+    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+    // Remote video
+    peerConnection.ontrack = (event) => {
+      document.getElementById("remoteVideo").srcObject = event.streams[0];
+    };
+
+    // ICE candidates
+    peerConnection.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.send(JSON.stringify({
+          action: "candidate",
+          candidate: event.candidate,
+          target: targetEmail,
+          from: userEmail,
+        }));
+      }
+    };
+
+    if (!isAnswer) {
+      // Create and send offer
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+      socket.send(JSON.stringify({
+        action: "offer",
+        sdp: offer.sdp,
+        target: targetEmail,
+        from: userEmail,
+      }));
+    } else {
+      // Create and send answer
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+      socket.send(JSON.stringify({
+        action: "answer",
+        sdp: answer.sdp,
+        target: targetEmail,
+        from: userEmail,
+      }));
+    }
+  }
+
+  async function handleOffer(data) {
+    document.getElementById("video-container").classList.remove("hidden");
+
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+    document.getElementById("localVideo").srcObject = localStream;
+
+    peerConnection = new RTCPeerConnection(rtcConfig);
+    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+    peerConnection.ontrack = (event) => {
+      document.getElementById("remoteVideo").srcObject = event.streams[0];
+    };
+
+    peerConnection.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.send(JSON.stringify({
+          action: "candidate",
+          candidate: event.candidate,
+          target: data.from,
+          from: userEmail,
+        }));
+      }
+    };
+
+    await peerConnection.setRemoteDescription({ type: "offer", sdp: data.sdp });
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+    socket.send(JSON.stringify({
+      action: "answer",
+      sdp: answer.sdp,
+      target: data.from,
+      from: userEmail,
+    }));
+  }
+
+  // Voice and video buttons
+  document.querySelectorAll('.hover\\:text-green-400').forEach(btn => {
+    btn.addEventListener('click', () => startCall(currentChatEmail, false, false));
+  });
+  document.querySelectorAll('.hover\\:text-blue-400').forEach(btn => {
+    btn.addEventListener('click', () => startCall(currentChatEmail, false, true));
+  });
+
 </script>
-
-
 
 
 <script src="{% static 'js/admin.js' %}"></script>
